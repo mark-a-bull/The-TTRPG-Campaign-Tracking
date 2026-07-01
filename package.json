@@ -1,0 +1,13 @@
+{
+  "name": "ttrpg-campaign-tracker",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"pnpm --filter @ttrpg/server dev\" \"pnpm --filter @ttrpg/web dev\"",
+    "build": "pnpm --filter @ttrpg/shared build && pnpm --filter @ttrpg/server build && pnpm --filter @ttrpg/web build",
+    "test": "pnpm --filter @ttrpg/server test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

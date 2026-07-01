@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id            String   @id @default(uuid())
+  name          String
+  description   String   @default("")
+  coverImageUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  pcs       Pc[]
+  npcs      Npc[]
+  monsters  Monster[]
+  locations Location[]
+  mysteries Mystery[]
+  clues     Clue[]
+
+  @@map("campaigns")
+}
+
+model Pc {
+  id                String   @id @default(uuid())
+  campaignId        String
+  name              String
+  portraitImageUrl  String?
+  roleOrClass       String   @default("")
+  background        String   @default("")
+  notes             String   @default("")
+  inventory         String   @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("pcs")
+}
+
+model Npc {
+  id               String   @id @default(uuid())
+  campaignId       String
+  name             String
+  portraitImageUrl String?
+  role             String   @default("")
+  description      String   @default("")
+  notes            String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("npcs")
+}
+
+model Monster {
+  id               String   @id @default(uuid())
+  campaignId       String
+  name             String
+  portraitImageUrl String?
+  description      String   @default("")
+  behaviors        String   @default("")
+  notes            String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("monsters")
+}
+
+model Location {
+  id          String   @id @default(uuid())
+  campaignId  String
+  name        String
+  imageUrl    String?
+  description String   @default("")
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("locations")
+}
+
+/// status: "active" | "resolved" | "abandoned" (validated by the shared Zod schema, not the DB)
+model Mystery {
+  id          String   @id @default(uuid())
+  campaignId  String
+  name        String
+  description String   @default("")
+  status      String   @default("active")
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  clues    Clue[]
+
+  @@map("mysteries")
+}
+
+/// visibility: "hidden" | "revealed" (validated by the shared Zod schema, not the DB)
+model Clue {
+  id         String   @id @default(uuid())
+  campaignId String
+  mysteryId  String?
+  title      String
+  content    String   @default("")
+  gmNotes    String   @default("")
+  visibility String   @default("hidden")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  mystery  Mystery? @relation(fields: [mysteryId], references: [id], onDelete: SetNull)
+
+  @@map("clues")
+}
