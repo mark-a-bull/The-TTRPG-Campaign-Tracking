@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { EntityType } from "@ttrpg/shared";
 import { useUploadAsset } from "../api/assets.js";
-import { createSchemaByType, fieldConfigsByType } from "../entity-schemas.js";
+import { createSchemaByType, fieldConfigsByType, type FieldConfig } from "../entity-schemas.js";
 import { Button } from "../ui/Button.js";
 import { TextField } from "../ui/TextField.js";
 
@@ -12,9 +12,35 @@ interface EntityFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
   onCancel: () => void;
   submitting?: boolean;
+  /** Renders every field as plain text with just a Close action, no Save. */
+  readOnly?: boolean;
 }
 
-export function EntityForm({ entityType, initialValues, onSubmit, onCancel, submitting }: EntityFormProps) {
+function ReadOnlyField({ field, value }: { field: FieldConfig; value: unknown }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: "var(--md-sys-color-on-surface-variant)" }}>{field.label}</div>
+      {field.kind === "image" ? (
+        typeof value === "string" && value ? (
+          <img src={value} alt="" style={{ maxWidth: 160, display: "block", marginTop: 8, borderRadius: 8 }} />
+        ) : (
+          <div style={{ fontSize: 16, color: "var(--md-sys-color-on-surface-variant)" }}>No image</div>
+        )
+      ) : (
+        <div style={{ fontSize: 16, whiteSpace: "pre-wrap" }}>{(value as string) || "—"}</div>
+      )}
+    </div>
+  );
+}
+
+export function EntityForm({
+  entityType,
+  initialValues,
+  onSubmit,
+  onCancel,
+  submitting,
+  readOnly,
+}: EntityFormProps) {
   const fields = fieldConfigsByType[entityType];
   const {
     watch,
@@ -31,6 +57,10 @@ export function EntityForm({ entityType, initialValues, onSubmit, onCancel, subm
     <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 320 }}>
       {fields.map((field) => {
         const value = watch(field.key);
+
+        if (readOnly) {
+          return <ReadOnlyField key={field.key} field={field} value={value} />;
+        }
 
         if (field.kind === "image") {
           return (
@@ -87,12 +117,20 @@ export function EntityForm({ entityType, initialValues, onSubmit, onCancel, subm
         );
       })}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <Button variant="text" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit((data) => onSubmit(data))} disabled={submitting}>
-          Save
-        </Button>
+        {readOnly ? (
+          <Button variant="text" onClick={onCancel}>
+            Close
+          </Button>
+        ) : (
+          <>
+            <Button variant="text" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit((data) => onSubmit(data))} disabled={submitting}>
+              Save
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
