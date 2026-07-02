@@ -189,7 +189,17 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
             <Button
               onClick={() => {
                 if (pendingDelete) {
-                  deleteEntity.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) });
+                  deleteEntity.mutate(pendingDelete.id, {
+                    onSuccess: () => {
+                      setPendingDelete(null);
+                      // If the deleted record's edit/view dialog is still
+                      // open, close it too — otherwise Save would PATCH an
+                      // id that no longer exists.
+                      setEditing((current) =>
+                        current && current !== "new" && current.id === pendingDelete.id ? null : current,
+                      );
+                    },
+                  });
                 }
               }}
             >
