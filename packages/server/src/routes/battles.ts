@@ -198,6 +198,12 @@ export function registerBattleRoutes(app: FastifyInstance) {
         if (!actor) {
           return reply.code(404).send({ message: `${body.actorType} not found in this campaign` });
         }
+        const existingEntry = await prisma.initiativeEntry.findFirst({
+          where: { battleEncounterId: battleId, actorType: body.actorType, actorId: body.actorId },
+        });
+        if (existingEntry) {
+          return reply.code(409).send({ message: "This combatant is already in the battle" });
+        }
       }
 
       const entryCount = await prisma.initiativeEntry.count({ where: { battleEncounterId: battleId } });

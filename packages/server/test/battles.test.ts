@@ -57,6 +57,13 @@ describe("battle flow", () => {
     const pcEntry = pcEntryRes.json().entries.find((entry: { actorId: string }) => entry.actorId === pcId);
     expect(pcEntry.currentHp).toBe(20);
 
+    const duplicatePcEntryRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battleId}/entries`,
+      payload: { kind: "entity", actorType: "pc", actorId: pcId },
+    });
+    expect(duplicatePcEntryRes.statusCode).toBe(409);
+
     const monsterEntryRes = await app.inject({
       method: "POST",
       url: `/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battleId}/entries`,
