@@ -13,6 +13,7 @@ import {
 } from "../api/battles.js";
 import { monsterHooks, npcHooks, pcHooks } from "../api/entities.js";
 import { Button } from "../ui/Button.js";
+import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
 import { TopAppBar } from "../ui/TopAppBar.js";
 
@@ -87,11 +88,17 @@ function BuildingView({ campaignId, sessionId, battleId, battle, nameLookup }: V
   const rollNpcInitiative = useRollNpcInitiative(campaignId, sessionId, battleId);
   const startBattle = useStartBattle(campaignId, sessionId, battleId);
   const [adHocName, setAdHocName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const addedActorIds = new Set(battle.entries.map((entry) => entry.actorId).filter(Boolean));
 
   return (
     <div>
+      {error ? (
+        <div style={{ marginBottom: 16 }}>
+          <ErrorBanner message={error} onDismiss={() => setError(null)} />
+        </div>
+      ) : null}
       <h2>Add Combatants</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
         {(
@@ -108,7 +115,10 @@ function BuildingView({ campaignId, sessionId, battleId, battle, nameLookup }: V
               <select
                 onChange={(event) => {
                   if (event.target.value) {
-                    addCombatant.mutate({ kind: "entity", actorType, actorId: event.target.value });
+                    addCombatant.mutate(
+                      { kind: "entity", actorType, actorId: event.target.value },
+                      { onError: (err) => setError(errorMessage(err)) },
+                    );
                     event.target.value = "";
                   }
                 }}
@@ -131,7 +141,10 @@ function BuildingView({ campaignId, sessionId, battleId, battle, nameLookup }: V
           <Button
             disabled={!adHocName.trim()}
             onClick={() => {
-              addCombatant.mutate({ kind: "adHoc", adHocName }, { onSuccess: () => setAdHocName("") });
+              addCombatant.mutate(
+                { kind: "adHoc", adHocName },
+                { onSuccess: () => setAdHocName(""), onError: (err) => setError(errorMessage(err)) },
+              );
             }}
           >
             Add
@@ -156,7 +169,10 @@ function BuildingView({ campaignId, sessionId, battleId, battle, nameLookup }: V
           >
             <div style={{ flex: 1 }}>{entryLabel(entry, nameLookup)}</div>
             <div>Initiative: {entry.initiative}</div>
-            <Button variant="text" onClick={() => removeCombatant.mutate(entry.id)}>
+            <Button
+              variant="text"
+              onClick={() => removeCombatant.mutate(entry.id, { onError: (err) => setError(errorMessage(err)) })}
+            >
               Remove
             </Button>
           </li>
@@ -164,10 +180,16 @@ function BuildingView({ campaignId, sessionId, battleId, battle, nameLookup }: V
       </ul>
 
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <Button variant="outlined" onClick={() => rollNpcInitiative.mutate()}>
+        <Button
+          variant="outlined"
+          onClick={() => rollNpcInitiative.mutate(undefined, { onError: (err) => setError(errorMessage(err)) })}
+        >
           Auto-roll NPCs/Monsters
         </Button>
-        <Button disabled={battle.entries.length === 0} onClick={() => startBattle.mutate()}>
+        <Button
+          disabled={battle.entries.length === 0}
+          onClick={() => startBattle.mutate(undefined, { onError: (err) => setError(errorMessage(err)) })}
+        >
           Start Battle
         </Button>
       </div>
@@ -178,12 +200,23 @@ function BuildingView({ campaignId, sessionId, battleId, battle, nameLookup }: V
 function ActiveView({ campaignId, sessionId, battleId, battle, nameLookup }: ViewProps) {
   const advanceTurn = useAdvanceTurn(campaignId, sessionId, battleId);
   const resolveBattle = useResolveBattle(campaignId, sessionId, battleId);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <div>
+      {error ? (
+        <div style={{ marginBottom: 16 }}>
+          <ErrorBanner message={error} onDismiss={() => setError(null)} />
+        </div>
+      ) : null}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <Button onClick={() => advanceTurn.mutate()}>Advance Turn</Button>
-        <Button variant="outlined" onClick={() => resolveBattle.mutate()}>
+        <Button onClick={() => advanceTurn.mutate(undefined, { onError: (err) => setError(errorMessage(err)) })}>
+          Advance Turn
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => resolveBattle.mutate(undefined, { onError: (err) => setError(errorMessage(err)) })}
+        >
           Resolve Battle
         </Button>
       </div>
@@ -222,8 +255,10 @@ function EntryRow({
   const applyAction = useBattleAction(campaignId, sessionId, battleId);
   const [amount, setAmount] = useState("1");
   const [statusLabel, setStatusLabel] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const parsedAmount = Math.max(1, Number.parseInt(amount, 10) || 1);
+  const onActionError = (err: unknown) => setError(errorMessage(err));
 
   return (
     <li
@@ -234,6 +269,11 @@ function EntryRow({
         border: isCurrent ? "2px solid var(--md-sys-color-primary)" : "2px solid transparent",
       }}
     >
+      {error ? (
+        <div style={{ marginBottom: 12 }}>
+          <ErrorBanner message={error} onDismiss={() => setError(null)} />
+        </div>
+      ) : null}
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div style={{ fontWeight: 500 }}>{label}</div>
         <div>Initiative: {entry.initiative}</div>
@@ -265,7 +305,12 @@ function EntryRow({
               >
                 {status.label}
                 <button
-                  onClick={() => applyAction.mutate({ entryId: entry.id, action: { type: "status-expire", statusId: status.id } })}
+                  onClick={() =>
+                    applyAction.mutate(
+                      { entryId: entry.id, action: { type: "status-expire", statusId: status.id } },
+                      { onError: onActionError },
+                    )
+                  }
                   style={{ border: "none", background: "none", cursor: "pointer" }}
                 >
                   ×
@@ -283,10 +328,26 @@ function EntryRow({
           onChange={(event) => setAmount(event.target.value)}
           style={{ width: 64 }}
         />
-        <Button variant="text" onClick={() => applyAction.mutate({ entryId: entry.id, action: { type: "damage", amount: parsedAmount } })}>
+        <Button
+          variant="text"
+          onClick={() =>
+            applyAction.mutate(
+              { entryId: entry.id, action: { type: "damage", amount: parsedAmount } },
+              { onError: onActionError },
+            )
+          }
+        >
           Damage
         </Button>
-        <Button variant="text" onClick={() => applyAction.mutate({ entryId: entry.id, action: { type: "heal", amount: parsedAmount } })}>
+        <Button
+          variant="text"
+          onClick={() =>
+            applyAction.mutate(
+              { entryId: entry.id, action: { type: "heal", amount: parsedAmount } },
+              { onError: onActionError },
+            )
+          }
+        >
           Heal
         </Button>
         <input
@@ -300,13 +361,19 @@ function EntryRow({
           variant="text"
           disabled={!statusLabel.trim()}
           onClick={() => {
-            applyAction.mutate({ entryId: entry.id, action: { type: "status-apply", label: statusLabel, note: "" } });
+            applyAction.mutate(
+              { entryId: entry.id, action: { type: "status-apply", label: statusLabel, note: "" } },
+              { onError: onActionError },
+            );
             setStatusLabel("");
           }}
         >
           Add Status
         </Button>
-        <Button variant="text" onClick={() => applyAction.mutate({ entryId: entry.id, action: { type: "ko" } })}>
+        <Button
+          variant="text"
+          onClick={() => applyAction.mutate({ entryId: entry.id, action: { type: "ko" } }, { onError: onActionError })}
+        >
           KO
         </Button>
       </div>

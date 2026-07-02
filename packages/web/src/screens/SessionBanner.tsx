@@ -4,6 +4,7 @@ import { locationHooks } from "../api/entities.js";
 import { useBattles, useCreateBattle } from "../api/battles.js";
 import { useAddGmNote, useEndSession, useSessions, useSetSessionLocation, useStartSession } from "../api/sessions.js";
 import { Button } from "../ui/Button.js";
+import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
 
 interface SessionBannerProps {
@@ -18,6 +19,7 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
 
   const [newTitle, setNewTitle] = useState("");
   const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const startSession = useStartSession(campaignId);
   const endSession = useEndSession(campaignId);
@@ -33,22 +35,39 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
 
   if (!activeSession) {
     return (
-      <div style={{ padding: 16, display: "flex", gap: 12, alignItems: "center", borderBottom: "1px solid var(--md-sys-color-outline-variant)" }}>
-        <div style={{ flex: 1, maxWidth: 280 }}>
-          <TextField label="Session title (optional)" value={newTitle} onChange={setNewTitle} />
+      <div style={{ borderBottom: "1px solid var(--md-sys-color-outline-variant)" }}>
+        {error ? (
+          <div style={{ padding: "8px 16px" }}>
+            <ErrorBanner message={error} onDismiss={() => setError(null)} />
+          </div>
+        ) : null}
+        <div style={{ padding: 16, display: "flex", gap: 12, alignItems: "center" }}>
+          <div style={{ flex: 1, maxWidth: 280 }}>
+            <TextField label="Session title (optional)" value={newTitle} onChange={setNewTitle} />
+          </div>
+          <Button
+            disabled={startSession.isPending}
+            onClick={() =>
+              startSession.mutate(
+                { title: newTitle },
+                { onSuccess: () => setNewTitle(""), onError: (err) => setError(errorMessage(err)) },
+              )
+            }
+          >
+            Start Session
+          </Button>
         </div>
-        <Button
-          disabled={startSession.isPending}
-          onClick={() => startSession.mutate({ title: newTitle }, { onSuccess: () => setNewTitle("") })}
-        >
-          Start Session
-        </Button>
       </div>
     );
   }
 
   return (
     <div style={{ padding: 16, borderBottom: "1px solid var(--md-sys-color-outline-variant)" }}>
+      {error ? (
+        <div style={{ marginBottom: 12 }}>
+          <ErrorBanner message={error} onDismiss={() => setError(null)} />
+        </div>
+      ) : null}
       <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ fontWeight: 500 }}>{activeSession.title || "Untitled session"} — active</div>
         {currentLocationName ? <div style={{ color: "var(--md-sys-color-on-surface-variant)" }}>@ {currentLocationName}</div> : null}
@@ -71,13 +90,20 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
               createBattle.mutate(undefined, {
                 onSuccess: (battle) =>
                   navigate(`/campaigns/${campaignId}/sessions/${activeSession.id}/battles/${battle.id}`),
+                onError: (err) => setError(errorMessage(err)),
               })
             }
           >
             Start Battle
           </Button>
         )}
-        <Button variant="outlined" disabled={endSession.isPending} onClick={() => endSession.mutate(activeSession.id)}>
+        <Button
+          variant="outlined"
+          disabled={endSession.isPending}
+          onClick={() =>
+            endSession.mutate(activeSession.id, { onError: (err) => setError(errorMessage(err)) })
+          }
+        >
           End Session
         </Button>
       </div>
@@ -88,7 +114,10 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
             value={activeSession.currentLocationId ?? ""}
             onChange={(event) => {
               if (event.target.value) {
-                setLocation.mutate({ locationId: event.target.value });
+                setLocation.mutate(
+                  { locationId: event.target.value },
+                  { onError: (err) => setError(errorMessage(err)) },
+                );
               }
             }}
           >
@@ -108,7 +137,12 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
         <Button
           variant="text"
           disabled={!note.trim() || addGmNote.isPending}
-          onClick={() => addGmNote.mutate({ note }, { onSuccess: () => setNote("") })}
+          onClick={() =>
+            addGmNote.mutate(
+              { note },
+              { onSuccess: () => setNote(""), onError: (err) => setError(errorMessage(err)) },
+            )
+          }
         >
           Log Note
         </Button>
