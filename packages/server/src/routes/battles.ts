@@ -376,19 +376,21 @@ export function registerBattleRoutes(app: FastifyInstance) {
       const targetName = await entryDisplayName(entry, battle.campaignId);
 
       if (action.type === "damage") {
-        if (entry.currentHp !== null) {
+        const applied = entry.currentHp !== null;
+        if (applied) {
           await prisma.initiativeEntry.update({
             where: { id: entryId },
-            data: { currentHp: Math.max(0, entry.currentHp - action.amount) },
+            data: { currentHp: Math.max(0, entry.currentHp! - action.amount) },
           });
         }
         await appendSessionEvent(sessionId, battle.campaignId, "DAMAGE_APPLIED", {
           ...target,
-          payload: { amount: action.amount, targetName },
+          payload: { amount: action.amount, targetName, applied },
         });
       } else if (action.type === "heal") {
-        if (entry.currentHp !== null) {
-          const healed = entry.currentHp + action.amount;
+        const applied = entry.currentHp !== null;
+        if (applied) {
+          const healed = entry.currentHp! + action.amount;
           await prisma.initiativeEntry.update({
             where: { id: entryId },
             data: { currentHp: entry.maxHp !== null ? Math.min(entry.maxHp, healed) : healed },
@@ -396,7 +398,7 @@ export function registerBattleRoutes(app: FastifyInstance) {
         }
         await appendSessionEvent(sessionId, battle.campaignId, "HEALING_APPLIED", {
           ...target,
-          payload: { amount: action.amount, targetName },
+          payload: { amount: action.amount, targetName, applied },
         });
       } else if (action.type === "status-apply") {
         if (action.sourceEntryId) {

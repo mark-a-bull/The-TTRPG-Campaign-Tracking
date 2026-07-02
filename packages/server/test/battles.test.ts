@@ -109,6 +109,17 @@ describe("battle flow", () => {
     expect(statusedEntry.statuses).toHaveLength(1);
     expect(statusedEntry.statuses[0].label).toBe("Poisoned");
 
+    const untrackedDamageRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battleId}/entries/${goblinEntry.id}/actions`,
+      payload: { type: "damage", amount: 3 },
+    });
+    expect(untrackedDamageRes.statusCode).toBe(200);
+    const untrackedGoblin = untrackedDamageRes
+      .json()
+      .entries.find((entry: { id: string }) => entry.id === goblinEntry.id);
+    expect(untrackedGoblin.currentHp).toBeNull();
+
     const bogusSourceRes = await app.inject({
       method: "POST",
       url: `/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battleId}/entries/${pcEntry.id}/actions`,
@@ -145,14 +156,18 @@ describe("battle flow", () => {
       method: "GET",
       url: `/api/campaigns/${campaignId}/sessions/${sessionId}/events`,
     });
-    const eventTypes = eventsRes.json().map((event: { type: string }) => event.type);
-    expect(eventTypes).toEqual([
+    const events = eventsRes.json();
+    expect(events.map((event: { type: string }) => event.type)).toEqual([
       "SESSION_STARTED",
       "BATTLE_STARTED",
       "DAMAGE_APPLIED",
       "STATUS_APPLIED",
+      "DAMAGE_APPLIED",
       "TURN_ADVANCED",
       "BATTLE_ENDED",
     ]);
+    const damageEvents = events.filter((event: { type: string }) => event.type === "DAMAGE_APPLIED");
+    expect(damageEvents[0].payload.applied).toBe(true);
+    expect(damageEvents[1].payload.applied).toBe(false);
   });
 });

@@ -22,6 +22,11 @@ const EVENT_LABELS: Record<string, string> = {
 function describeEvent(event: SessionEvent): string {
   const payload = event.payload;
   const name = typeof payload.targetName === "string" ? payload.targetName : undefined;
+  // DAMAGE_APPLIED/HEALING_APPLIED are still logged for combatants with no HP
+  // tracked (e.g. an ad-hoc entry added without a max HP), since the action
+  // was still taken — but `applied` says whether HP actually moved, so the
+  // wording doesn't claim a change that didn't happen.
+  const applied = payload.applied !== false;
 
   switch (event.type) {
     case "GM_NOTE":
@@ -35,9 +40,13 @@ function describeEvent(event: SessionEvent): string {
     case "TURN_ADVANCED":
       return name ? `${name}'s turn` : "";
     case "DAMAGE_APPLIED":
-      return `${name ?? "Someone"} took ${payload.amount ?? "?"} damage`;
+      return applied
+        ? `${name ?? "Someone"} took ${payload.amount ?? "?"} damage`
+        : `Attempted ${payload.amount ?? "?"} damage on ${name ?? "someone"} (no HP tracked)`;
     case "HEALING_APPLIED":
-      return `${name ?? "Someone"} healed ${payload.amount ?? "?"}`;
+      return applied
+        ? `${name ?? "Someone"} healed ${payload.amount ?? "?"}`
+        : `Attempted to heal ${name ?? "someone"} for ${payload.amount ?? "?"} (no HP tracked)`;
     case "STATUS_APPLIED":
       return `${name ?? "Someone"} gained status: ${payload.label ?? "?"}`;
     case "STATUS_EXPIRED":
