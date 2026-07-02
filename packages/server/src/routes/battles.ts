@@ -267,11 +267,14 @@ export function registerBattleRoutes(app: FastifyInstance) {
         return reply.code(409).send({ message: "Initiative can only be auto-rolled while building" });
       }
       const entries = await prisma.initiativeEntry.findMany({ where: { battleEncounterId: battleId } });
-      await Promise.all(
-        entries
-          .filter((entry) => entry.actorType === "npc" || entry.actorType === "monster" || entry.adHocName)
-          .map((entry) => prisma.initiativeEntry.update({ where: { id: entry.id }, data: { initiative: rollD20() } })),
+      const rollable = entries.filter(
+        (entry) => entry.actorType === "npc" || entry.actorType === "monster" || entry.adHocName,
       );
+      if (rollable.length > 0) {
+        await prisma.$transaction(
+          rollable.map((entry) => prisma.initiativeEntry.update({ where: { id: entry.id }, data: { initiative: rollD20() } })),
+        );
+      }
       return loadBattleDetail(battleId);
     },
   );
@@ -300,7 +303,7 @@ export function registerBattleRoutes(app: FastifyInstance) {
       if (entries.length === 0) {
         return reply.code(409).send({ message: "Add at least one combatant before starting" });
       }
-      await Promise.all(
+      await prisma.$transaction(
         entries.map((entry, index) =>
           prisma.initiativeEntry.update({ where: { id: entry.id }, data: { order: index } }),
         ),
