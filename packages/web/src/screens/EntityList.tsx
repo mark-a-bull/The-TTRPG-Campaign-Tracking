@@ -13,6 +13,7 @@ import {
 import { Button } from "../ui/Button.js";
 import { Card } from "../ui/Card.js";
 import { Dialog } from "../ui/Dialog.js";
+import { IconButton } from "../ui/IconButton.js";
 import { EntityForm } from "./EntityForm.js";
 
 // entityType is stable for the lifetime of a mounted EntityList instance (the
@@ -66,6 +67,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
   const updateEntity = useUpdateForType(entityType, campaignId);
 
   const [editing, setEditing] = useState<MinimalEntityRecord | "new" | null>(null);
+  const [readOnly, setReadOnly] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<MinimalEntityRecord | null>(null);
 
   if (isLoading) {
@@ -75,11 +77,26 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
   const imageField = config.imageField;
   const titleField = config.titleField;
 
+  function openView(record: MinimalEntityRecord) {
+    setEditing(record);
+    setReadOnly(true);
+  }
+
+  function openEdit(record: MinimalEntityRecord) {
+    setEditing(record);
+    setReadOnly(false);
+  }
+
+  function openCreate() {
+    setEditing("new");
+    setReadOnly(false);
+  }
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ margin: 0 }}>{config.pluralLabel}</h2>
-        <Button onClick={() => setEditing("new")}>Add {config.label}</Button>
+        <Button onClick={openCreate}>Add {config.label}</Button>
       </div>
 
       {records && records.length === 0 ? (
@@ -91,7 +108,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
           const imageUrl = imageField ? (record[imageField] as string | null) : null;
           const title = (record[titleField] as string) || "Untitled";
           return (
-            <Card key={record.id} onClick={() => setEditing(record)}>
+            <Card key={record.id} onClick={() => openView(record)}>
               <div style={{ padding: 16 }}>
                 {imageUrl ? (
                   <img
@@ -100,16 +117,25 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
                     style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 8 }}
                   />
                 ) : null}
-                <div style={{ fontSize: 16, fontWeight: 500 }}>{title}</div>
-                <Button
-                  variant="text"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setPendingDelete(record);
-                  }}
-                >
-                  Delete
-                </Button>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontSize: 16, fontWeight: 500, flex: 1 }}>{title}</div>
+                  <IconButton
+                    icon="edit"
+                    label={`Edit ${title}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openEdit(record);
+                    }}
+                  />
+                  <IconButton
+                    icon="delete"
+                    label={`Delete ${title}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setPendingDelete(record);
+                    }}
+                  />
+                </div>
               </div>
             </Card>
           );
@@ -119,12 +145,21 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
       <Dialog
         open={editing !== null}
         onClose={() => setEditing(null)}
-        headline={editing === "new" ? `New ${config.label}` : `Edit ${config.label}`}
+        headline={
+          editing === "new" ? `New ${config.label}` : readOnly ? `View ${config.label}` : `Edit ${config.label}`
+        }
       >
         <EntityForm
+          // Dialog keeps EntityForm mounted and just toggles visibility, but
+          // react-hook-form only reads `defaultValues` once at mount — so a
+          // fresh key per edit target forces a remount to re-hydrate the form
+          // with the newly selected record's values instead of showing stale
+          // (often empty) state from whenever it first mounted.
+          key={editing === "new" ? "new" : (editing ? editing.id : "closed")}
           entityType={entityType}
           initialValues={editing && editing !== "new" ? editing : undefined}
           submitting={createEntity.isPending || updateEntity.isPending}
+          readOnly={editing !== "new" && readOnly}
           onCancel={() => setEditing(null)}
           onSubmit={(data) => {
             // The create/update hooks are picked per entityType via a switch (see
@@ -154,7 +189,17 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
             <Button
               onClick={() => {
                 if (pendingDelete) {
-                  deleteEntity.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) });
+                  deleteEntity.mutate(pendingDelete.id, {
+                    onSuccess: () => {
+                      setPendingDelete(null);
+                      // If the deleted record's edit/view dialog is still
+                      // open, close it too — otherwise Save would PATCH an
+                      // id that no longer exists.
+                      setEditing((current) =>
+                        current && current !== "new" && current.id === pendingDelete.id ? null : current,
+                      );
+                    },
+                  });
                 }
               }}
             >

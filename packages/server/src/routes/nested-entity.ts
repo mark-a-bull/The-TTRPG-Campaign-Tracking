@@ -39,9 +39,11 @@ export function registerNestedEntityRoutes<
     createSchema: z.ZodType<TCreate>;
     updateSchema: z.ZodType<TUpdate>;
     readSchema: z.ZodType<unknown>;
+    /** Optional pre-delete guard (e.g. "is this PC in an active battle?"). */
+    beforeDelete?: (id: string, campaignId: string) => Promise<{ blocked: true; message: string } | { blocked: false }>;
   },
 ) {
-  const { prefix, delegate, createSchema, updateSchema, readSchema } = options;
+  const { prefix, delegate, createSchema, updateSchema, readSchema, beforeDelete } = options;
   const typed = app.withTypeProvider<ZodTypeProvider>();
   const paramsSchema = z.object({ campaignId: z.string().uuid() });
   const itemParamsSchema = z.object({ campaignId: z.string().uuid(), id: z.string().uuid() });
@@ -136,7 +138,7 @@ export function registerNestedEntityRoutes<
     {
       schema: {
         params: itemParamsSchema,
-        response: { 204: z.null(), 404: errorResponseSchema },
+        response: { 204: z.null(), 404: errorResponseSchema, 409: errorResponseSchema },
       },
     },
     async (request, reply) => {
@@ -144,6 +146,12 @@ export function registerNestedEntityRoutes<
       const existing = await delegate.findFirst({ where: { id, campaignId } });
       if (!existing) {
         return reply.code(404).send({ message: "Not found" });
+      }
+      if (beforeDelete) {
+        const check = await beforeDelete(id, campaignId);
+        if (check.blocked) {
+          return reply.code(409).send({ message: check.message });
+        }
       }
       await delegate.delete({ where: { id } });
       return reply.code(204).send(null);

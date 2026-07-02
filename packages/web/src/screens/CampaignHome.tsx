@@ -6,6 +6,7 @@ import { Button } from "../ui/Button.js";
 import { Tabs } from "../ui/Tabs.js";
 import { TopAppBar } from "../ui/TopAppBar.js";
 import { EntityList } from "./EntityList.js";
+import { SessionBanner } from "./SessionBanner.js";
 
 export function CampaignHome() {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -29,6 +30,7 @@ export function CampaignHome() {
           </Button>
         }
       />
+      <SessionBanner campaignId={campaign.id} />
       <Tabs
         labels={entityTypes.map((type) => entityTypeConfig[type].pluralLabel)}
         selectedIndex={tabIndex}

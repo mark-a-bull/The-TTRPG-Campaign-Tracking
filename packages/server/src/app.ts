@@ -4,6 +4,7 @@ import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from "fastify-type-provider-zod";
 import { ASSETS_DIR, registerAssetRoutes } from "./routes/assets.js";
+import { registerBattleRoutes } from "./routes/battles.js";
 import { registerCampaignRoutes } from "./routes/campaigns.js";
 import { registerClueRoutes } from "./routes/clues.js";
 import { registerLocationRoutes } from "./routes/locations.js";
@@ -11,6 +12,7 @@ import { registerMonsterRoutes } from "./routes/monsters.js";
 import { registerMysteryRoutes } from "./routes/mysteries.js";
 import { registerNpcRoutes } from "./routes/npcs.js";
 import { registerPcRoutes } from "./routes/pcs.js";
+import { registerSessionRoutes } from "./routes/sessions.js";
 
 export async function buildApp(options: { logger?: boolean } = {}) {
   const app = Fastify({ logger: options.logger ?? true }).withTypeProvider<ZodTypeProvider>();
@@ -30,6 +32,8 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   registerLocationRoutes(app);
   registerMysteryRoutes(app);
   registerClueRoutes(app);
+  registerSessionRoutes(app);
+  registerBattleRoutes(app);
 
   app.setErrorHandler((error: Error & { statusCode?: number }, _request, reply) => {
     app.log.error(error);

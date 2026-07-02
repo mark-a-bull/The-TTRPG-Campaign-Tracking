@@ -14,6 +14,7 @@ interface TextFieldProps {
   multiline?: boolean;
   rows?: number;
   errorText?: string;
+  disabled?: boolean;
 }
 
 export function TextField({
@@ -25,6 +26,7 @@ export function TextField({
   multiline,
   rows,
   errorText,
+  disabled,
 }: TextFieldProps) {
   const ref = useRef<TextFieldElement>(null);
 
@@ -56,6 +58,7 @@ export function TextField({
       required={required || undefined}
       error={Boolean(errorText) || undefined}
       error-text={errorText}
+      disabled={disabled || undefined}
       style={{ width: "100%" }}
     />
   );
