@@ -393,6 +393,14 @@ export function registerBattleRoutes(app: FastifyInstance) {
           payload: { amount: action.amount, targetName },
         });
       } else if (action.type === "status-apply") {
+        if (action.sourceEntryId) {
+          const sourceEntry = await prisma.initiativeEntry.findFirst({
+            where: { id: action.sourceEntryId, battleEncounterId: battleId },
+          });
+          if (!sourceEntry) {
+            return reply.code(404).send({ message: "Source entry not found in this battle" });
+          }
+        }
         await prisma.statusEffectInstance.create({
           data: {
             initiativeEntryId: entryId,

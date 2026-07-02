@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
@@ -100,6 +101,13 @@ describe("battle flow", () => {
     const statusedEntry = statusRes.json().entries.find((entry: { id: string }) => entry.id === pcEntry.id);
     expect(statusedEntry.statuses).toHaveLength(1);
     expect(statusedEntry.statuses[0].label).toBe("Poisoned");
+
+    const bogusSourceRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battleId}/entries/${pcEntry.id}/actions`,
+      payload: { type: "status-apply", label: "Blessed", note: "", sourceEntryId: randomUUID() },
+    });
+    expect(bogusSourceRes.statusCode).toBe(404);
 
     const advanceRes = await app.inject({
       method: "POST",
