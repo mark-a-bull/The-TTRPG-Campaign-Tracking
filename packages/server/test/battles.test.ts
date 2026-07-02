@@ -122,12 +122,24 @@ describe("battle flow", () => {
     });
     expect(advanceRes.statusCode).toBe(200);
 
+    const blockedDeleteRes = await app.inject({
+      method: "DELETE",
+      url: `/api/campaigns/${campaignId}/pcs/${pcId}`,
+    });
+    expect(blockedDeleteRes.statusCode).toBe(409);
+
     const resolveRes = await app.inject({
       method: "POST",
       url: `/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battleId}/resolve`,
     });
     expect(resolveRes.statusCode).toBe(200);
     expect(resolveRes.json().status).toBe("resolved");
+
+    const deleteAfterResolveRes = await app.inject({
+      method: "DELETE",
+      url: `/api/campaigns/${campaignId}/pcs/${pcId}`,
+    });
+    expect(deleteAfterResolveRes.statusCode).toBe(204);
 
     const eventsRes = await app.inject({
       method: "GET",
