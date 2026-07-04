@@ -1,5 +1,6 @@
 import "@material/web/textfield/outlined-text-field.js";
 import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 
 interface TextFieldElement extends HTMLElement {
   value: string;
@@ -49,6 +50,14 @@ export function TextField({
     return () => el.removeEventListener("input", handleInput);
   }, [onChange]);
 
+  const themeStyle = {
+    width: "100%",
+    "--md-outlined-text-field-container-color": "var(--md-sys-color-surface)",
+    "--md-outlined-text-field-label-text-color": "var(--md-sys-color-on-surface-variant)",
+    "--md-outlined-text-field-input-text-color": "var(--md-sys-color-on-surface)",
+    "--md-outlined-text-field-outline-color": "var(--md-sys-color-outline)",
+  } as CSSProperties;
+
   return (
     <md-outlined-text-field
       ref={ref}
@@ -59,7 +68,7 @@ export function TextField({
       error={Boolean(errorText) || undefined}
       error-text={errorText}
       disabled={disabled || undefined}
-      style={{ width: "100%" }}
+      style={themeStyle}
     />
   );
 }
