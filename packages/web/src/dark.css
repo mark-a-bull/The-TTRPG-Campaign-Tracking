@@ -1,18 +1,1 @@
-/* M3 dark theme tokens — applied when .dark class is present on <html> */
-html.dark {
-  color-scheme: dark;
-  --md-sys-color-primary: #d0bcff;
-  --md-sys-color-on-primary: #381e72;
-  --md-sys-color-primary-container: #4f378b;
-  --md-sys-color-on-primary-container: #eaddff;
-  --md-sys-color-surface: #1c1b1f;
-  --md-sys-color-on-surface: #e6e1e5;
-  --md-sys-color-surface-variant: #49454f;
-  --md-sys-color-on-surface-variant: #cac4d0;
-  --md-sys-color-outline: #938f99;
-  --md-sys-color-outline-variant: #49454f;
-  --md-sys-color-error: #f2b8b5;
-  --md-sys-color-on-error: #601410;
-  --md-sys-color-background: #1c1b1f;
-  --md-sys-color-on-background: #e6e1e5;
-}
+/* Dark mode styles are now in index.css */
