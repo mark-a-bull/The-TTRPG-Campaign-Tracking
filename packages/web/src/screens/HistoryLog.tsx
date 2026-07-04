@@ -59,7 +59,7 @@ export function HistoryLog() {
   const { campaignId, sessionId } = useParams<{ campaignId: string; sessionId: string }>();
   const navigate = useNavigate();
   const { data: session } = useSession(campaignId, sessionId);
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
 
   const {
     data,
