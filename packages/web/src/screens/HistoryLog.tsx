@@ -59,7 +59,15 @@ export function HistoryLog() {
   const { campaignId, sessionId } = useParams<{ campaignId: string; sessionId: string }>();
   const navigate = useNavigate();
   const { data: session } = useSession(campaignId, sessionId);
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [order, setOrder] = useState<"asc" | "desc">(() => {
+    return (localStorage.getItem("ttrpg-history-sort") as "asc" | "desc") || "desc";
+  });
+
+  // Persist sort preference
+  const handleSortChange = (newOrder: "asc" | "desc") => {
+    setOrder(newOrder);
+    localStorage.setItem("ttrpg-history-sort", newOrder);
+  };
 
   const {
     data,
@@ -102,7 +110,7 @@ export function HistoryLog() {
         trailing={
           <Button
             variant="text"
-            onClick={() => setOrder(order === "asc" ? "desc" : "asc")}
+            onClick={() => handleSortChange(order === "asc" ? "desc" : "asc")}
           >
             {order === "asc" ? "↓ Oldest first" : "↑ Newest first"}
           </Button>
