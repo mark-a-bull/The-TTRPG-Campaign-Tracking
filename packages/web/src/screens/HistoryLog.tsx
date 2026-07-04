@@ -1,6 +1,7 @@
+import { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { SessionEvent } from "@ttrpg/shared";
-import { useSession, useSessionEvents } from "../api/sessions.js";
+import { useSession, useInfiniteSessionEvents } from "../api/sessions.js";
 import { Button } from "../ui/Button.js";
 import { TopAppBar } from "../ui/TopAppBar.js";
 
@@ -22,10 +23,6 @@ const EVENT_LABELS: Record<string, string> = {
 function describeEvent(event: SessionEvent): string {
   const payload = event.payload;
   const name = typeof payload.targetName === "string" ? payload.targetName : undefined;
-  // DAMAGE_APPLIED/HEALING_APPLIED are still logged for combatants with no HP
-  // tracked (e.g. an ad-hoc entry added without a max HP), since the action
-  // was still taken — but `applied` says whether HP actually moved, so the
-  // wording doesn't claim a change that didn't happen.
   const applied = payload.applied !== false;
 
   switch (event.type) {
@@ -62,7 +59,36 @@ export function HistoryLog() {
   const { campaignId, sessionId } = useParams<{ campaignId: string; sessionId: string }>();
   const navigate = useNavigate();
   const { data: session } = useSession(campaignId, sessionId);
-  const { data: events, isLoading } = useSessionEvents(campaignId, sessionId);
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
+
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteSessionEvents(campaignId, sessionId, order);
+
+  const events = data?.pages.flatMap((page) => page.events) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
+
+  // Intersection Observer for infinite scroll
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastEventRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      if (isFetchingNextPage) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [isFetchingNextPage, hasNextPage, fetchNextPage],
+  );
 
   return (
     <div>
@@ -73,28 +99,59 @@ export function HistoryLog() {
             ← Campaign
           </Button>
         }
+        trailing={
+          <Button
+            variant="text"
+            onClick={() => setOrder(order === "asc" ? "desc" : "asc")}
+          >
+            {order === "asc" ? "↓ Oldest first" : "↑ Newest first"}
+          </Button>
+        }
       />
       <div style={{ padding: 24, maxWidth: 720 }}>
         {isLoading ? <p>Loading…</p> : null}
-        {events && events.length === 0 ? <p>No events logged yet.</p> : null}
+        {events.length === 0 && !isLoading ? <p>No events logged yet.</p> : null}
+
+        {total > 0 && (
+          <div style={{ fontSize: 12, color: "var(--md-sys-color-on-surface-variant)", marginBottom: 12 }}>
+            Showing {events.length} of {total} events
+          </div>
+        )}
+
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          {events?.map((event) => (
-            <li
-              key={event.id}
-              style={{
-                padding: 12,
-                borderRadius: 8,
-                background: "var(--md-sys-color-surface-variant)",
-              }}
-            >
-              <div style={{ fontSize: 12, color: "var(--md-sys-color-on-surface-variant)" }}>
-                {EVENT_LABELS[event.type] ?? event.type} ·{" "}
-                {new Date(event.createdAt).toLocaleTimeString()}
-              </div>
-              <div>{describeEvent(event)}</div>
-            </li>
-          ))}
+          {events.map((event, index) => {
+            const isLast = index === events.length - 1;
+            return (
+              <li
+                key={event.id}
+                ref={isLast ? lastEventRef : undefined}
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  background: "var(--md-sys-color-surface-variant)",
+                }}
+              >
+                <div style={{ fontSize: 12, color: "var(--md-sys-color-on-surface-variant)" }}>
+                  {EVENT_LABELS[event.type] ?? event.type} ·{" "}
+                  {new Date(event.createdAt).toLocaleTimeString()}
+                </div>
+                <div>{describeEvent(event)}</div>
+              </li>
+            );
+          })}
         </ul>
+
+        {isFetchingNextPage && (
+          <p style={{ textAlign: "center", color: "var(--md-sys-color-on-surface-variant)" }}>
+            Loading more…
+          </p>
+        )}
+
+        {!hasNextPage && events.length > 0 && (
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--md-sys-color-on-surface-variant)", marginTop: 16 }}>
+            End of history
+          </p>
+        )}
       </div>
     </div>
   );

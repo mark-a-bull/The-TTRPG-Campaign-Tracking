@@ -188,20 +188,42 @@ export function registerSessionRoutes(app: FastifyInstance) {
     {
       schema: {
         params: sessionParams,
-        response: { 200: z.array(sessionEventSchema), 404: errorResponseSchema },
+        querystring: z.object({
+          offset: z.coerce.number().int().min(0).default(0),
+          limit: z.coerce.number().int().min(1).max(100).default(20),
+          order: z.enum(["asc", "desc"]).default("asc"),
+        }),
+        response: {
+          200: z.object({
+            events: z.array(sessionEventSchema),
+            total: z.number(),
+            hasMore: z.boolean(),
+          }),
+          404: errorResponseSchema,
+        },
       },
     },
     async (request, reply) => {
       const { campaignId, id } = request.params;
+      const { offset, limit, order } = request.query;
       const session = await prisma.session.findFirst({ where: { id, campaignId } });
       if (!session) {
         return reply.code(404).send({ message: "Session not found" });
       }
-      const events = await prisma.sessionEvent.findMany({
-        where: { sessionId: id },
-        orderBy: { createdAt: "asc" },
-      });
-      return events.map(serializeSessionEvent);
+      const [events, total] = await Promise.all([
+        prisma.sessionEvent.findMany({
+          where: { sessionId: id },
+          orderBy: { createdAt: order },
+          skip: offset,
+          take: limit,
+        }),
+        prisma.sessionEvent.count({ where: { sessionId: id } }),
+      ]);
+      return {
+        events: events.map(serializeSessionEvent),
+        total,
+        hasMore: offset + limit < total,
+      };
     },
   );
 }
