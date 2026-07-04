@@ -38,7 +38,7 @@ const defaultLightColors: ColorScheme = {
 
 const defaultDarkColors: ColorScheme = {
   primary: "#d0bcff",
-  surface: "#1c1b1f",
+  surface: "#74698c",
   onSurface: "#e6e1e5",
   background: "#1c1b1f",
   onBackground: "#e6e1e5",
