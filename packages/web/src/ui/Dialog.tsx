@@ -1,6 +1,6 @@
 import "@material/web/dialog/dialog.js";
 import { useEffect, useRef } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 interface DialogElement extends HTMLElement {
   open: boolean;
@@ -32,8 +32,13 @@ export function Dialog({ open, onClose, headline, children, actions }: DialogPro
     return () => el.removeEventListener("closed", handleClosed);
   }, [onClose]);
 
+  const themeStyle = {
+    "--md-dialog-container-color": "var(--md-sys-color-surface)",
+    "--md-dialog-headline-color": "var(--md-sys-color-on-surface)",
+  } as CSSProperties;
+
   return (
-    <md-dialog ref={ref}>
+    <md-dialog ref={ref} style={themeStyle}>
       <div slot="headline">{headline}</div>
       <form slot="content" method="dialog">
         {children}

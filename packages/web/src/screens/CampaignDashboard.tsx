@@ -4,6 +4,7 @@ import { useCampaigns, useCreateCampaign } from "../api/campaigns.js";
 import { Button } from "../ui/Button.js";
 import { Card } from "../ui/Card.js";
 import { Dialog } from "../ui/Dialog.js";
+import { IconButton } from "../ui/IconButton.js";
 import { TextField } from "../ui/TextField.js";
 import { TopAppBar } from "../ui/TopAppBar.js";
 
@@ -24,7 +25,12 @@ export function CampaignDashboard() {
 
   return (
     <div>
-      <TopAppBar title="Campaigns" />
+      <TopAppBar
+        title="Campaigns"
+        trailing={
+          <IconButton icon="settings" label="Settings" onClick={() => navigate("/settings")} />
+        }
+      />
       <div style={{ padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h1 style={{ margin: 0, fontSize: 20 }}>Your Campaigns</h1>

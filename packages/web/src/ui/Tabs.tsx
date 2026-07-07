@@ -1,6 +1,7 @@
 import "@material/web/tabs/tabs.js";
 import "@material/web/tabs/primary-tab.js";
 import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 
 interface TabsElement extends HTMLElement {
   activeTabIndex: number;
@@ -33,8 +34,14 @@ export function Tabs({ labels, selectedIndex, onChange }: TabsProps) {
     return () => el.removeEventListener("change", handleChange);
   }, [onChange]);
 
+  const themeStyle = {
+    "--md-tabs-active-indicator-color": "var(--md-sys-color-primary)",
+    "--md-tabs-label-text-color": "var(--md-sys-color-on-surface-variant)",
+    "--md-tabs-active-label-text-color": "var(--md-sys-color-primary)",
+  } as CSSProperties;
+
   return (
-    <md-tabs ref={ref}>
+    <md-tabs ref={ref} style={themeStyle}>
       {labels.map((label) => (
         <md-primary-tab key={label}>{label}</md-primary-tab>
       ))}
