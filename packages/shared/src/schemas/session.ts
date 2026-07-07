@@ -57,6 +57,12 @@ export const sessionEventSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
+export const paginatedSessionEventsSchema = z.object({
+  events: z.array(sessionEventSchema),
+  total: z.number(),
+  hasMore: z.boolean(),
+});
+
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 export type ActorType = z.infer<typeof actorTypeSchema>;
 export type SessionEventType = z.infer<typeof sessionEventTypeSchema>;
@@ -65,3 +71,4 @@ export type Session = z.infer<typeof sessionSchema>;
 export type SetLocation = z.input<typeof setLocationSchema>;
 export type AddGmNote = z.input<typeof addGmNoteSchema>;
 export type SessionEvent = z.infer<typeof sessionEventSchema>;
+export type PaginatedSessionEvents = z.infer<typeof paginatedSessionEventsSchema>;

@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AddGmNote, SessionCreate, SessionEvent, Session, SetLocation } from "@ttrpg/shared";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import type { AddGmNote, SessionCreate, SessionEvent, Session, SetLocation, PaginatedSessionEvents } from "@ttrpg/shared";
 import { apiFetch } from "./client.js";
 
 const sessionsKey = (campaignId: string) => ["campaigns", campaignId, "sessions"] as const;
@@ -28,6 +28,26 @@ export function useSessionEvents(campaignId: string | undefined, sessionId: stri
   return useQuery({
     queryKey: sessionEventsKey(campaignId ?? "", sessionId ?? ""),
     queryFn: () => apiFetch<SessionEvent[]>(`/campaigns/${campaignId}/sessions/${sessionId}/events`),
+    enabled: Boolean(campaignId && sessionId),
+  });
+}
+
+export function useInfiniteSessionEvents(
+  campaignId: string | undefined,
+  sessionId: string | undefined,
+  order: "asc" | "desc" = "asc",
+) {
+  return useInfiniteQuery<PaginatedSessionEvents>({
+    queryKey: [...sessionEventsKey(campaignId ?? "", sessionId ?? ""), { order }],
+    queryFn: ({ pageParam = 0 }) =>
+      apiFetch<PaginatedSessionEvents>(
+        `/campaigns/${campaignId}/sessions/${sessionId}/events?offset=${pageParam}&limit=20&order=${order}`,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined;
+      return allPages.length * 20;
+    },
     enabled: Boolean(campaignId && sessionId),
   });
 }
