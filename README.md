@@ -9,9 +9,11 @@ The long-term design covers campaign/entity management, optional per-system rule
 Implemented so far:
 
 - **Core entities** — Campaigns, PCs, NPCs, Monsters, Locations, Mysteries/Clues, with full CRUD, image uploads, and a generic view/edit/delete UI.
-- **Sessions & battle tracking** — start/end a session, log GM notes and location changes, and run a battle (build combatants → roll initiative → track turns, damage, healing, and status effects → resolve), all recorded to an append-only, chronological history log.
+- **Sessions & battle tracking** — start/end a session, log GM notes and location changes, and run a battle (build combatants → roll initiative → track turns, damage, healing, and status effects → resolve), all recorded to an append-only, chronological history log with a sortable, infinite-scrolling view (sort preference persisted locally).
+- **Entity relationships** — link any two entities to each other with a label (optionally directional, with a separate reverse label), a hidden/revealed visibility flag, and notes. Links show on every linked entity's page, correctly oriented from each side.
+- **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted locally per browser.
 
-Not yet built: ruleset/plugin modules (stats are freeform for now), entity relationships, GM/player authentication, the player-facing view, the public display screen, Discord integration, import/export, and real-time (WebSocket) updates.
+Not yet built: ruleset/plugin modules (stats are freeform for now), GM/player authentication, the player-facing view, the public display screen, Discord integration, import/export, XP/leveling, end-of-session summaries, and real-time (WebSocket) updates.
 
 ## Tech stack
 
@@ -58,3 +60,20 @@ pnpm build
 ```
 
 Builds `shared`, then `server`, then `web` in dependency order.
+
+## Roadmap
+
+The long-term design covers more than what's built today. Roughly in the order these are expected to be tackled next:
+
+- **Ruleset/plugin modules** — the biggest gap between design and code; entities currently have only freeform fields, with no stats, mechanics, or formulas tied to a specific system.
+- **Auth** — GM login and player identities. This blocks the player-facing view, the public display screen, and Discord integration, which all assume auth exists first.
+- **Clue/Mystery reveal mechanism** — Clues already have a `visibility` field; the full event-sourced "reveal" flow (with per-PC visibility scoping) still needs to be built.
+- **XP/leveling** — a core/optional-ruleset split, designed but not started.
+- **End-of-session summary generation** — a GM-facing recap built from the session's event log.
+- **Real-time updates** — WebSocket push so the player view and public screen stay in sync live during a session.
+- **Import/export** — moving campaigns between machines, with conflict resolution for entities edited independently on both sides.
+
+Known small gaps, tracked but not yet fixed:
+
+- The delete-confirmation dialog on entity list screens doesn't surface errors, so a blocked delete (e.g. a combatant that's part of an active battle) fails silently there.
+- Campaign Dashboard cards don't yet have the edit/delete icon treatment other entity cards use — clicking one just navigates.
