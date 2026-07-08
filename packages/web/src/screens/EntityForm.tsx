@@ -5,6 +5,7 @@ import { useUploadAsset } from "../api/assets.js";
 import { createSchemaByType, fieldConfigsByType, type FieldConfig } from "../entity-schemas.js";
 import { Button } from "../ui/Button.js";
 import { TextField } from "../ui/TextField.js";
+import { EntityLinksSection } from "./EntityLinksSection.js";
 
 interface EntityFormProps {
   entityType: EntityType;
@@ -116,6 +117,16 @@ export function EntityForm({
           />
         );
       })}
+
+      {initialValues ? (
+        <EntityLinksSection
+          campaignId={initialValues.campaignId as string}
+          entityType={entityType}
+          entityId={initialValues.id as string}
+          readOnly={readOnly}
+        />
+      ) : null}
+
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
         {readOnly ? (
           <Button variant="text" onClick={onCancel}>

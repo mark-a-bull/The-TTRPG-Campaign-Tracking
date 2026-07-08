@@ -35,9 +35,12 @@ export function Dialog({ open, onClose, headline, children, actions }: DialogPro
   return (
     <md-dialog ref={ref}>
       <div slot="headline">{headline}</div>
-      <form slot="content" method="dialog">
-        {children}
-      </form>
+      {/* A plain div, not <form method="dialog"> — md-dialog's open/close/ESC/
+          backdrop handling is entirely internal and doesn't need a form
+          wrapper, and every close in this app goes through explicit onClick
+          handlers. A form wrapper here also breaks when a Dialog is nested
+          inside another Dialog's content (invalid nested <form> elements). */}
+      <div slot="content">{children}</div>
       {actions ? <div slot="actions">{actions}</div> : null}
     </md-dialog>
   );

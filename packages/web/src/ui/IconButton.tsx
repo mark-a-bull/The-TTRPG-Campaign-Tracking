@@ -11,7 +11,11 @@ interface IconButtonProps {
 
 export function IconButton({ icon, label, onClick }: IconButtonProps) {
   return (
-    <md-icon-button aria-label={label} onClick={onClick}>
+    // type="button" is required, not just a default-matching nicety: Dialog
+    // wraps its content in a native <form method="dialog">, and md-icon-button
+    // defaults to type="submit" like a native button — without this, clicking
+    // it inside a Dialog submits the form and silently closes the dialog.
+    <md-icon-button type="button" aria-label={label} onClick={onClick}>
       <md-icon>{icon}</md-icon>
     </md-icon-button>
   );
