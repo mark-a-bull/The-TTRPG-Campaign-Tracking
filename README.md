@@ -84,6 +84,3 @@ Requested features, not yet designed:
 - **Text/SMS notifications** ([#15](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/15)) — an alternative to Discord integration for sending information to players.
 - **Organizations entity type** ([#19](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/19)) — a new core entity for groups that serve a shared purpose (a business, religion, gang, government, or the PCs' own party), with the same relationships, images, and notes support as other entities.
 
-Known small gaps, tracked but not yet fixed:
-
-- Campaign Dashboard cards don't yet have the edit/delete icon treatment other entity cards use — clicking one just navigates.
