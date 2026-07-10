@@ -77,8 +77,9 @@ export function registerSessionRoutes(app: FastifyInstance) {
       if (activeSession) {
         return reply.code(409).send({ message: "A session is already active for this campaign" });
       }
+      const title = request.body.title.trim() || new Date().toLocaleString();
       const session = await prisma.session.create({
-        data: { campaignId, title: request.body.title },
+        data: { campaignId, title },
       });
       await appendSessionEvent(session.id, campaignId, "SESSION_STARTED");
       return reply.code(201).send(serializeSession(session));
