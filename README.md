@@ -77,6 +77,13 @@ The long-term design covers more than what's built today. Roughly in the order t
 - **Real-time updates** — WebSocket push so the player view and public screen stay in sync live during a session.
 - **Import/export** — moving campaigns between machines, with conflict resolution for entities edited independently on both sides.
 
+Requested features, not yet designed:
+
+- **Custom calendar** ([#3](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/3)) — track in-world dates and events on a GM-configurable calendar.
+- **Sub-locations** ([#10](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/10)) — nest a Location under a parent (e.g. floors or rooms within a larger building) so a specific area can get its own focus.
+- **Text/SMS notifications** ([#15](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/15)) — an alternative to Discord integration for sending information to players.
+- **Organizations entity type** ([#19](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/19)) — a new core entity for groups that serve a shared purpose (a business, religion, gang, government, or the PCs' own party), with the same relationships, images, and notes support as other entities.
+
 Known small gaps, tracked but not yet fixed:
 
 - The delete-confirmation dialog on entity list screens doesn't surface errors, so a blocked delete (e.g. a combatant that's part of an active battle) fails silently there.
