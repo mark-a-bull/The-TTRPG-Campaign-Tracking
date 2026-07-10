@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCampaigns, useCreateCampaign } from "../api/campaigns.js";
+import type { Campaign } from "@ttrpg/shared";
+import { useCampaigns, useCreateCampaign, useDeleteCampaign, useUpdateCampaign } from "../api/campaigns.js";
 import { Button } from "../ui/Button.js";
 import { Card } from "../ui/Card.js";
 import { Dialog } from "../ui/Dialog.js";
+import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { IconButton } from "../ui/IconButton.js";
 import { TextField } from "../ui/TextField.js";
 import { TopAppBar } from "../ui/TopAppBar.js";
@@ -17,10 +19,29 @@ export function CampaignDashboard() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const updateCampaign = useUpdateCampaign(editingCampaign?.id ?? "");
+
+  const [pendingDelete, setPendingDelete] = useState<Campaign | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteCampaign = useDeleteCampaign();
+
   function resetAndClose() {
     setDialogOpen(false);
     setName("");
     setDescription("");
+  }
+
+  function openEdit(campaign: Campaign) {
+    setEditingCampaign(campaign);
+    setEditName(campaign.name);
+    setEditDescription(campaign.description);
+  }
+
+  function closeEdit() {
+    setEditingCampaign(null);
   }
 
   return (
@@ -51,7 +72,26 @@ export function CampaignDashboard() {
                     style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 8 }}
                   />
                 ) : null}
-                <div style={{ fontSize: 18, fontWeight: 500 }}>{campaign.name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontSize: 18, fontWeight: 500, flex: 1 }}>{campaign.name}</div>
+                  <IconButton
+                    icon="edit"
+                    label={`Edit ${campaign.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openEdit(campaign);
+                    }}
+                  />
+                  <IconButton
+                    icon="delete"
+                    label={`Delete ${campaign.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setDeleteError(null);
+                      setPendingDelete(campaign);
+                    }}
+                  />
+                </div>
                 <div style={{ fontSize: 13, color: "var(--md-sys-color-on-surface-variant)" }}>
                   {campaign.description}
                 </div>
@@ -87,6 +127,70 @@ export function CampaignDashboard() {
             </Button>
           </div>
         </div>
+      </Dialog>
+
+      <Dialog open={editingCampaign !== null} onClose={closeEdit} headline="Edit Campaign">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 320 }}>
+          <TextField label="Name" value={editName} onChange={setEditName} required />
+          <TextField label="Description" value={editDescription} onChange={setEditDescription} multiline />
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <Button variant="text" onClick={closeEdit}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!editName.trim() || updateCampaign.isPending}
+              onClick={() =>
+                updateCampaign.mutate(
+                  { name: editName, description: editDescription },
+                  { onSuccess: closeEdit },
+                )
+              }
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={pendingDelete !== null}
+        onClose={() => {
+          setPendingDelete(null);
+          setDeleteError(null);
+        }}
+        headline={`Delete ${pendingDelete?.name ?? ""}?`}
+        actions={
+          <>
+            <Button
+              variant="text"
+              onClick={() => {
+                setPendingDelete(null);
+                setDeleteError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={deleteCampaign.isPending}
+              onClick={() => {
+                if (pendingDelete) {
+                  deleteCampaign.mutate(pendingDelete.id, {
+                    onSuccess: () => {
+                      setPendingDelete(null);
+                      setDeleteError(null);
+                    },
+                    onError: (error) => setDeleteError(errorMessage(error)),
+                  });
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        {deleteError ? <ErrorBanner message={deleteError} onDismiss={() => setDeleteError(null)} /> : null}
+        <p>This can't be undone. All entities, sessions, and history in this campaign will be deleted too.</p>
       </Dialog>
     </div>
   );
