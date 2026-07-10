@@ -78,4 +78,18 @@ describe("session lifecycle", () => {
     const eventTypes = eventsRes.json().map((event: { type: string }) => event.type);
     expect(eventTypes).toEqual(["SESSION_STARTED", "LOCATION_CHANGED", "GM_NOTE", "SESSION_ENDED"]);
   });
+
+  it("defaults an untitled session's title to the current date and time", async () => {
+    const startRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/sessions`,
+      payload: { title: "  " },
+    });
+    expect(startRes.statusCode).toBe(201);
+    const session = startRes.json();
+    expect(session.title).not.toBe("");
+    expect(session.title).toContain(String(new Date().getFullYear()));
+
+    await app.inject({ method: "POST", url: `/api/campaigns/${campaignId}/sessions/${session.id}/end` });
+  });
 });
