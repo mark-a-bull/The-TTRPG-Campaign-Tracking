@@ -11,6 +11,7 @@ Implemented so far:
 - **Core entities** — Campaigns, PCs, NPCs, Monsters, Locations, Mysteries/Clues, with full CRUD, image uploads, and a generic view/edit/delete UI.
 - **Sessions & battle tracking** — start/end a session, log GM notes and location changes, and run a battle (build combatants → roll initiative → track turns, damage, healing, and status effects → resolve), all recorded to an append-only, chronological history log with a sortable, infinite-scrolling view (sort preference persisted locally).
 - **Entity relationships** — link any two entities to each other with a label (optionally directional, with a separate reverse label), a hidden/revealed visibility flag, and notes. Links show on every linked entity's page, correctly oriented from each side.
+- **Clue/Mystery reveal mechanism** — reveal or hide a clue as a dedicated, session-logged action (not a silent field edit), optionally scoped to specific PCs instead of the whole party. Every reveal/hide shows up in the session's history log.
 - **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted locally per browser.
 
 Not yet built: ruleset/plugin modules (stats are freeform for now), GM/player authentication, the player-facing view, the public display screen, Discord integration, import/export, XP/leveling, end-of-session summaries, and real-time (WebSocket) updates.
@@ -53,6 +54,10 @@ pnpm test
 
 This runs the server's integration test suite (Vitest), covering entity CRUD, session lifecycle, and a full battle flow end to end. Tests run against a separate SQLite database (`data/test.db`) so they don't touch your dev data.
 
+## Contributing
+
+See [CLAUDE.md](CLAUDE.md) for architecture notes and development gotchas (generic vs. custom CRUD routes, the event-sourced session history, Material Web Components quirks, and more).
+
 ## Building for production
 
 ```bash
@@ -67,7 +72,6 @@ The long-term design covers more than what's built today. Roughly in the order t
 
 - **Ruleset/plugin modules** — the biggest gap between design and code; entities currently have only freeform fields, with no stats, mechanics, or formulas tied to a specific system.
 - **Auth** — GM login and player identities. This blocks the player-facing view, the public display screen, and Discord integration, which all assume auth exists first.
-- **Clue/Mystery reveal mechanism** — Clues already have a `visibility` field; the full event-sourced "reveal" flow (with per-PC visibility scoping) still needs to be built.
 - **XP/leveling** — a core/optional-ruleset split, designed but not started.
 - **End-of-session summary generation** — a GM-facing recap built from the session's event log.
 - **Real-time updates** — WebSocket push so the player view and public screen stay in sync live during a session.
