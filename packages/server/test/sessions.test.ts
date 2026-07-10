@@ -75,7 +75,7 @@ describe("session lifecycle", () => {
       url: `/api/campaigns/${campaignId}/sessions/${session.id}/events`,
     });
     expect(eventsRes.statusCode).toBe(200);
-    const eventTypes = eventsRes.json().map((event: { type: string }) => event.type);
+    const eventTypes = eventsRes.json().events.map((event: { type: string }) => event.type);
     expect(eventTypes).toEqual(["SESSION_STARTED", "LOCATION_CHANGED", "GM_NOTE", "SESSION_ENDED"]);
   });
 
