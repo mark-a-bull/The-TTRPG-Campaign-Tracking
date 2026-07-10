@@ -71,6 +71,8 @@ export const fieldConfigsByType: Record<EntityType, FieldConfig[]> = {
     { key: "title", label: "Title", kind: "text" },
     { key: "content", label: "Content (what players learn)", kind: "longtext" },
     { key: "gmNotes", label: "GM Notes", kind: "longtext" },
-    { key: "visibility", label: "Visibility", kind: "select", options: ["hidden", "revealed"] },
+    // No "visibility" field here — it's exposed only through ClueRevealSection's
+    // dedicated Reveal/Hide actions in EntityForm, which log the change to the
+    // session history instead of silently editing it.
   ],
 };

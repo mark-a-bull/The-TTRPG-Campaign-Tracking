@@ -2,9 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { EntityType } from "@ttrpg/shared";
 import { useUploadAsset } from "../api/assets.js";
+import type { Clue } from "@ttrpg/shared";
 import { createSchemaByType, fieldConfigsByType, type FieldConfig } from "../entity-schemas.js";
 import { Button } from "../ui/Button.js";
 import { TextField } from "../ui/TextField.js";
+import { ClueRevealSection } from "./ClueRevealSection.js";
 import { EntityLinksSection } from "./EntityLinksSection.js";
 
 interface EntityFormProps {
@@ -117,6 +119,14 @@ export function EntityForm({
           />
         );
       })}
+
+      {initialValues && entityType === "clues" ? (
+        <ClueRevealSection
+          campaignId={initialValues.campaignId as string}
+          clue={initialValues as unknown as Clue}
+          readOnly={readOnly}
+        />
+      ) : null}
 
       {initialValues ? (
         <EntityLinksSection
