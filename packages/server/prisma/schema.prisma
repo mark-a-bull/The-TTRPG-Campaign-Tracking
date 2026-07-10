@@ -109,6 +109,7 @@ model Mystery {
 }
 
 /// visibility: "hidden" | "revealed" (validated by the shared Zod schema, not the DB)
+/// visibleTo: JSON-encoded array of PC ids, or null (not scoped — revealed to whole party)
 model Clue {
   id         String   @id @default(uuid())
   campaignId String
@@ -117,6 +118,7 @@ model Clue {
   content    String   @default("")
   gmNotes    String   @default("")
   visibility String   @default("hidden")
+  visibleTo  String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

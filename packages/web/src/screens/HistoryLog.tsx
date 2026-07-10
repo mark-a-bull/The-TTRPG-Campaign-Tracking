@@ -18,6 +18,8 @@ const EVENT_LABELS: Record<string, string> = {
   STATUS_APPLIED: "Status applied",
   STATUS_EXPIRED: "Status expired",
   KO: "Knocked out",
+  CLUE_REVEALED: "Clue revealed",
+  CLUE_HIDDEN: "Clue hidden",
 };
 
 function describeEvent(event: SessionEvent): string {
@@ -50,6 +52,10 @@ function describeEvent(event: SessionEvent): string {
       return `${name ?? "Someone"}'s status expired: ${payload.label ?? "?"}`;
     case "KO":
       return `${name ?? "Someone"} was knocked out`;
+    case "CLUE_REVEALED":
+      return typeof payload.clueTitle === "string" ? `Revealed: ${payload.clueTitle}` : "";
+    case "CLUE_HIDDEN":
+      return typeof payload.clueTitle === "string" ? `Hid: ${payload.clueTitle}` : "";
     default:
       return "";
   }
