@@ -8,4 +8,7 @@ export const timestampFields = {
   updatedAt: z.string().datetime(),
 };
 
-export const nullableImageUrl = z.string().url().nullable().default(null);
+// Not `.url()`: the upload endpoint returns a root-relative path (e.g.
+// `/assets/<uuid>.png`), not a fully-qualified URL, so `.url()` rejected every
+// successfully uploaded image and silently blocked saving.
+export const nullableImageUrl = z.string().min(1).nullable().default(null);

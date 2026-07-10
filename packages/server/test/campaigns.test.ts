@@ -72,4 +72,26 @@ describe("campaign CRUD", () => {
 
     await app.inject({ method: "DELETE", url: `/api/campaigns/${campaign.id}` });
   });
+
+  it("accepts a root-relative asset path as a PC's portrait image", async () => {
+    const createRes = await app.inject({
+      method: "POST",
+      url: "/api/campaigns",
+      payload: { name: "Image Test Campaign" },
+    });
+    const campaign = createRes.json();
+
+    // Mirrors what POST /api/assets actually returns — a root-relative path,
+    // not a fully-qualified URL. This previously failed create-time Zod
+    // validation and silently blocked saving (see nullableImageUrl).
+    const pcRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaign.id}/pcs`,
+      payload: { name: "Kira", portraitImageUrl: "/assets/11111111-1111-1111-1111-111111111111.png" },
+    });
+    expect(pcRes.statusCode).toBe(201);
+    expect(pcRes.json().portraitImageUrl).toBe("/assets/11111111-1111-1111-1111-111111111111.png");
+
+    await app.inject({ method: "DELETE", url: `/api/campaigns/${campaign.id}` });
+  });
 });

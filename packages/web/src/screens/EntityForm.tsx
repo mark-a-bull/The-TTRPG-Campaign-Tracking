@@ -1,10 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { EntityType } from "@ttrpg/shared";
 import { useUploadAsset } from "../api/assets.js";
 import type { Clue } from "@ttrpg/shared";
 import { createSchemaByType, fieldConfigsByType, type FieldConfig } from "../entity-schemas.js";
 import { Button } from "../ui/Button.js";
+import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
 import { ClueRevealSection } from "./ClueRevealSection.js";
 import { EntityLinksSection } from "./EntityLinksSection.js";
@@ -55,9 +57,11 @@ export function EntityForm({
     defaultValues: initialValues,
   });
   const uploadAsset = useUploadAsset();
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 320 }}>
+      {uploadError ? <ErrorBanner message={uploadError} onDismiss={() => setUploadError(null)} /> : null}
       {fields.map((field) => {
         const value = watch(field.key);
 
@@ -77,13 +81,26 @@ export function EntityForm({
               <input
                 type="file"
                 accept="image/*"
+                disabled={uploadAsset.isPending}
                 onChange={async (event) => {
                   const file = event.target.files?.[0];
                   if (!file) return;
-                  const result = await uploadAsset.mutateAsync(file);
-                  setValue(field.key, result.url, { shouldDirty: true });
+                  setUploadError(null);
+                  try {
+                    const result = await uploadAsset.mutateAsync(file);
+                    setValue(field.key, result.url, { shouldDirty: true, shouldValidate: true });
+                  } catch (error) {
+                    setUploadError(errorMessage(error));
+                  } finally {
+                    event.target.value = "";
+                  }
                 }}
               />
+              {errors[field.key] ? (
+                <div style={{ fontSize: 12, color: "var(--md-sys-color-error)", marginTop: 4 }}>
+                  {errors[field.key]?.message as string}
+                </div>
+              ) : null}
             </div>
           );
         }
