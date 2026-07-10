@@ -13,6 +13,7 @@ import {
 import { Button } from "../ui/Button.js";
 import { Card } from "../ui/Card.js";
 import { Dialog } from "../ui/Dialog.js";
+import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { IconButton } from "../ui/IconButton.js";
 import { EntityForm } from "./EntityForm.js";
 
@@ -69,6 +70,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
   const [editing, setEditing] = useState<MinimalEntityRecord | "new" | null>(null);
   const [readOnly, setReadOnly] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<MinimalEntityRecord | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (isLoading) {
     return <p>Loading {config.pluralLabel.toLowerCase()}…</p>;
@@ -132,6 +134,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
                     label={`Delete ${title}`}
                     onClick={(event) => {
                       event.stopPropagation();
+                      setDeleteError(null);
                       setPendingDelete(record);
                     }}
                   />
@@ -179,19 +182,30 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
 
       <Dialog
         open={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
+        onClose={() => {
+          setPendingDelete(null);
+          setDeleteError(null);
+        }}
         headline={`Delete ${pendingDelete ? (pendingDelete[titleField] as string) : ""}?`}
         actions={
           <>
-            <Button variant="text" onClick={() => setPendingDelete(null)}>
+            <Button
+              variant="text"
+              onClick={() => {
+                setPendingDelete(null);
+                setDeleteError(null);
+              }}
+            >
               Cancel
             </Button>
             <Button
+              disabled={deleteEntity.isPending}
               onClick={() => {
                 if (pendingDelete) {
                   deleteEntity.mutate(pendingDelete.id, {
                     onSuccess: () => {
                       setPendingDelete(null);
+                      setDeleteError(null);
                       // If the deleted record's edit/view dialog is still
                       // open, close it too — otherwise Save would PATCH an
                       // id that no longer exists.
@@ -199,6 +213,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
                         current && current !== "new" && current.id === pendingDelete.id ? null : current,
                       );
                     },
+                    onError: (error) => setDeleteError(errorMessage(error)),
                   });
                 }
               }}
@@ -208,6 +223,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
           </>
         }
       >
+        {deleteError ? <ErrorBanner message={deleteError} onDismiss={() => setDeleteError(null)} /> : null}
         <p>This can't be undone.</p>
       </Dialog>
     </div>

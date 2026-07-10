@@ -86,5 +86,4 @@ Requested features, not yet designed:
 
 Known small gaps, tracked but not yet fixed:
 
-- The delete-confirmation dialog on entity list screens doesn't surface errors, so a blocked delete (e.g. a combatant that's part of an active battle) fails silently there.
 - Campaign Dashboard cards don't yet have the edit/delete icon treatment other entity cards use — clicking one just navigates.
