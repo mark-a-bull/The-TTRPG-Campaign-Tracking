@@ -41,6 +41,10 @@ pnpm --filter @ttrpg/server exec vitest run -t "rejects a self-link"
 
 Prisma schema changes need a migration: `pnpm --filter @ttrpg/server exec prisma migrate dev --name <description>`.
 
+## Merge policy
+
+No change is ready to merge until `pnpm test` passes in full. Run it before opening a PR, not just before committing — a change can pass in isolation but break an unrelated test (e.g. an API response shape change breaking an older test that assumed the old shape). If any test fails, fix it as part of the same change before the PR is opened; don't merge with a known-broken suite and fix it later.
+
 ## Architecture
 
 ### Shared schemas drive both ends
