@@ -9,7 +9,7 @@ The long-term design covers campaign/entity management, optional per-system rule
 Implemented so far:
 
 - **Core entities** — Campaigns, PCs, NPCs, Monsters, Locations, Mysteries/Clues, with full CRUD, image uploads, and a generic view/edit/delete UI.
-- **Sessions & battle tracking** — start/end a session, log GM notes and location changes, and run a battle (build combatants → roll initiative → track turns, damage, healing, and status effects → resolve), all recorded to an append-only, chronological history log with a sortable, infinite-scrolling view (sort preference persisted locally).
+- **Sessions & battle tracking** — start/end a session (an untitled session defaults its title to the current local date and time), log GM notes and location changes, and run a battle (build combatants → roll initiative → track turns, damage, healing, and status effects → resolve), all recorded to an append-only, chronological history log with a sortable, infinite-scrolling view (sort preference persisted locally).
 - **Entity relationships** — link any two entities to each other with a label (optionally directional, with a separate reverse label), a hidden/revealed visibility flag, and notes. Links show on every linked entity's page, correctly oriented from each side.
 - **Clue/Mystery reveal mechanism** — reveal or hide a clue as a dedicated, session-logged action (not a silent field edit), optionally scoped to specific PCs instead of the whole party. Every reveal/hide shows up in the session's history log.
 - **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted locally per browser.
