@@ -156,7 +156,7 @@ describe("battle flow", () => {
       method: "GET",
       url: `/api/campaigns/${campaignId}/sessions/${sessionId}/events`,
     });
-    const events = eventsRes.json();
+    const events = eventsRes.json().events;
     expect(events.map((event: { type: string }) => event.type)).toEqual([
       "SESSION_STARTED",
       "BATTLE_STARTED",
