@@ -93,10 +93,13 @@ describe("PC XP awards", () => {
       url: `/api/campaigns/${campaignId}/sessions/${endedSessionId}/events`,
     });
     const events = eventsRes.json().events;
-    const xpEvents = events.filter((event: { type: string }) => event.type === "XP_AWARDED");
-    const levelUpEvent = xpEvents.find((event: { payload: { newLevel?: number } }) => event.payload.newLevel === 2);
-    expect(levelUpEvent).toBeDefined();
-    expect(levelUpEvent.payload).toMatchObject({ pcId, pcName: "Rell Ashwood", previousLevel: 1, newLevel: 2 });
+    const xpEvent = events.find((event: { type: string }) => event.type === "END_OF_SESSION_XP_AWARDED");
+    expect(xpEvent).toBeDefined();
+    expect(xpEvent.payload).toMatchObject({ pcId, pcName: "Rell Ashwood", amount: 20, newXp: 100 });
+
+    const levelEvent = events.find((event: { type: string }) => event.type === "END_OF_SESSION_LEVEL_AWARDED");
+    expect(levelEvent).toBeDefined();
+    expect(levelEvent.payload).toMatchObject({ pcId, pcName: "Rell Ashwood", previousLevel: 1, newLevel: 2 });
   });
 
   it("404s for a sessionId that doesn't belong to the campaign", async () => {

@@ -85,9 +85,15 @@ async function buildSessionSummary(session: { id: string; title: string; started
         if (typeof payload.targetName === "string") knockouts.push(payload.targetName);
         break;
       case "XP_AWARDED":
+      case "END_OF_SESSION_XP_AWARDED":
         if (typeof payload.pcName === "string" && typeof payload.amount === "number") {
           xpAwards.push({ pcName: payload.pcName, amount: payload.amount });
         }
+        if (typeof payload.pcName === "string" && typeof payload.newLevel === "number") {
+          levelChanges.push({ pcName: payload.pcName, newLevel: payload.newLevel });
+        }
+        break;
+      case "END_OF_SESSION_LEVEL_AWARDED":
         if (typeof payload.pcName === "string" && typeof payload.newLevel === "number") {
           levelChanges.push({ pcName: payload.pcName, newLevel: payload.newLevel });
         }

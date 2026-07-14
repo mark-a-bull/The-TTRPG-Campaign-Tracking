@@ -170,4 +170,38 @@ describe("session summary", () => {
     expect(summary.totalXpAwarded).toBe(50);
     expect(summary.levelChanges).toEqual([{ pcName: "Kira Stormwind", newLevel: 2 }]);
   });
+
+  it("aggregates end-of-session bulk awards (explicit sessionId) alongside mid-session ones", async () => {
+    await app.inject({ method: "POST", url: `/api/campaigns/${campaignId}/sessions/${sessionId}/end` });
+
+    await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/pcs/${pcId}/award-xp`,
+      payload: { amount: 25, level: 3, sessionId },
+    });
+
+    const summaryRes = await app.inject({
+      method: "GET",
+      url: `/api/campaigns/${campaignId}/sessions/${sessionId}/summary`,
+    });
+    const summary = summaryRes.json();
+
+    expect(summary.xpAwards).toEqual([
+      { pcName: "Kira Stormwind", amount: 50 },
+      { pcName: "Kira Stormwind", amount: 25 },
+    ]);
+    expect(summary.totalXpAwarded).toBe(75);
+    expect(summary.levelChanges).toEqual([
+      { pcName: "Kira Stormwind", newLevel: 2 },
+      { pcName: "Kira Stormwind", newLevel: 3 },
+    ]);
+
+    const eventsRes = await app.inject({
+      method: "GET",
+      url: `/api/campaigns/${campaignId}/sessions/${sessionId}/events`,
+    });
+    const eventTypes = eventsRes.json().events.map((event: { type: string }) => event.type);
+    expect(eventTypes).toContain("END_OF_SESSION_XP_AWARDED");
+    expect(eventTypes).toContain("END_OF_SESSION_LEVEL_AWARDED");
+  });
 });

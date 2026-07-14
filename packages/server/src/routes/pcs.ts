@@ -63,16 +63,34 @@ export function registerPcRoutes(app: FastifyInstance) {
       }
 
       if (targetSession) {
-        await appendSessionEvent(targetSession.id, campaignId, "XP_AWARDED", {
-          payload: {
-            pcId: pc.id,
-            pcName: pc.name,
-            amount,
-            newXp,
-            note,
-            ...(levelChanged ? { previousLevel: pc.level, newLevel: level } : {}),
-          },
-        });
+        if (sessionId) {
+          // Came from the end-of-session summary's bulk award panel -- log
+          // XP and level changes as their own distinct event types rather
+          // than the standalone flow's combined XP_AWARDED, so the history
+          // log (and anything reading it later) can tell end-of-session
+          // awards apart from a mid-session Award XP action.
+          if (amount !== 0) {
+            await appendSessionEvent(targetSession.id, campaignId, "END_OF_SESSION_XP_AWARDED", {
+              payload: { pcId: pc.id, pcName: pc.name, amount, newXp, note },
+            });
+          }
+          if (levelChanged) {
+            await appendSessionEvent(targetSession.id, campaignId, "END_OF_SESSION_LEVEL_AWARDED", {
+              payload: { pcId: pc.id, pcName: pc.name, previousLevel: pc.level, newLevel: level },
+            });
+          }
+        } else {
+          await appendSessionEvent(targetSession.id, campaignId, "XP_AWARDED", {
+            payload: {
+              pcId: pc.id,
+              pcName: pc.name,
+              amount,
+              newXp,
+              note,
+              ...(levelChanged ? { previousLevel: pc.level, newLevel: level } : {}),
+            },
+          });
+        }
       }
 
       return serializeTimestamps(updated);

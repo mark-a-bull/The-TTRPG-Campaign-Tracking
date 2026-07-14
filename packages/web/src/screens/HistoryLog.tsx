@@ -22,6 +22,8 @@ const EVENT_LABELS: Record<string, string> = {
   CLUE_REVEALED: "Clue revealed",
   CLUE_HIDDEN: "Clue hidden",
   XP_AWARDED: "XP awarded",
+  END_OF_SESSION_XP_AWARDED: "End-of-session XP awarded",
+  END_OF_SESSION_LEVEL_AWARDED: "End-of-session level awarded",
 };
 
 function describeEvent(event: SessionEvent): string {
@@ -69,6 +71,12 @@ function describeEvent(event: SessionEvent): string {
       }
       return parts.length > 0 ? `${payload.pcName} ${parts.join(" and ")}` : payload.pcName;
     }
+    case "END_OF_SESSION_XP_AWARDED":
+      return typeof payload.pcName === "string"
+        ? `${payload.pcName} gained ${payload.amount} XP (total: ${payload.newXp})`
+        : "";
+    case "END_OF_SESSION_LEVEL_AWARDED":
+      return typeof payload.pcName === "string" ? `${payload.pcName} reached Level ${payload.newLevel}` : "";
     default:
       return "";
   }
