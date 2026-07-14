@@ -37,10 +37,21 @@ function serializeClue(clue: ClueRecord) {
   };
 }
 
-function toPrismaData(body: Record<string, unknown>) {
-  if (!("visibleTo" in body)) return body;
+// Generic (rather than a fixed `Record<string, unknown>` parameter/return
+// type) so the caller's other fields -- notably `title`, required by
+// Prisma's ClueCreateInput -- survive in the return type instead of being
+// widened away, which previously broke `tsc` at every call site.
+function toPrismaData<T extends Record<string, unknown>>(
+  body: T,
+): Omit<T, "visibleTo"> & { visibleTo?: string | null } {
+  if (!("visibleTo" in body)) {
+    return body as Omit<T, "visibleTo"> & { visibleTo?: string | null };
+  }
   const { visibleTo, ...rest } = body;
-  return { ...rest, visibleTo: visibleTo === undefined ? null : JSON.stringify(visibleTo) };
+  return {
+    ...rest,
+    visibleTo: visibleTo === undefined ? null : JSON.stringify(visibleTo),
+  } as Omit<T, "visibleTo"> & { visibleTo?: string | null };
 }
 
 export function registerClueRoutes(app: FastifyInstance) {
