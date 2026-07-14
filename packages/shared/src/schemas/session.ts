@@ -20,6 +20,7 @@ export const sessionEventTypeSchema = z.enum([
   "KO",
   "CLUE_REVEALED",
   "CLUE_HIDDEN",
+  "XP_AWARDED",
 ]);
 
 export const sessionCreateSchema = z.object({

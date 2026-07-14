@@ -23,7 +23,7 @@ export const createSchemaByType: Record<EntityType, z.ZodType<Record<string, unk
   clues: clueCreateSchema,
 };
 
-export type FieldKind = "text" | "longtext" | "image" | "select";
+export type FieldKind = "text" | "longtext" | "number" | "image" | "select";
 
 export interface FieldConfig {
   key: string;
@@ -37,9 +37,13 @@ export const fieldConfigsByType: Record<EntityType, FieldConfig[]> = {
     { key: "name", label: "Name", kind: "text" },
     { key: "portraitImageUrl", label: "Portrait", kind: "image" },
     { key: "roleOrClass", label: "Role / Class", kind: "text" },
+    { key: "level", label: "Level", kind: "number" },
     { key: "background", label: "Background", kind: "longtext" },
     { key: "inventory", label: "Inventory", kind: "longtext" },
     { key: "notes", label: "Notes", kind: "longtext" },
+    // No "xp" field here — it's exposed only through XpAwardSection's
+    // dedicated Award XP action in EntityForm, which logs the change to the
+    // session history (when one is active) instead of silently editing it.
   ],
   npcs: [
     { key: "name", label: "Name", kind: "text" },
