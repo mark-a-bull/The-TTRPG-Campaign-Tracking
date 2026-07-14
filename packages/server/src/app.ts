@@ -6,6 +6,7 @@ import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from "fas
 import { ASSETS_DIR, registerAssetRoutes } from "./routes/assets.js";
 import { registerBattleRoutes } from "./routes/battles.js";
 import { registerCampaignRoutes } from "./routes/campaigns.js";
+import { registerCampaignTransferRoutes } from "./routes/campaign-transfer.js";
 import { registerClueRoutes } from "./routes/clues.js";
 import { registerEntityLinkRoutes } from "./routes/entity-links.js";
 import { registerLocationRoutes } from "./routes/locations.js";
@@ -22,10 +23,13 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   app.setSerializerCompiler(serializerCompiler);
 
   await app.register(cors, { origin: true });
-  await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024 } });
+  // 50MB, not 10MB like a single asset upload -- a campaign export/import
+  // zip can bundle many images at once.
+  await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
   await app.register(fastifyStatic, { root: ASSETS_DIR, prefix: "/assets/", decorateReply: false });
 
   registerCampaignRoutes(app);
+  registerCampaignTransferRoutes(app);
   registerAssetRoutes(app);
   registerPcRoutes(app);
   registerNpcRoutes(app);

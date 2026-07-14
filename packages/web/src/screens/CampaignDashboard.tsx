@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Campaign } from "@ttrpg/shared";
-import { useCampaigns, useCreateCampaign, useDeleteCampaign, useUpdateCampaign } from "../api/campaigns.js";
+import {
+  exportCampaignUrl,
+  useCampaigns,
+  useCreateCampaign,
+  useDeleteCampaign,
+  useImportCampaign,
+  useUpdateCampaign,
+} from "../api/campaigns.js";
 import { Button } from "../ui/Button.js";
 import { Card } from "../ui/Card.js";
 import { Dialog } from "../ui/Dialog.js";
@@ -28,6 +36,10 @@ export function CampaignDashboard() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteCampaign = useDeleteCampaign();
 
+  const [importError, setImportError] = useState<string | null>(null);
+  const importCampaign = useImportCampaign();
+  const importInputRef = useRef<HTMLInputElement>(null);
+
   function resetAndClose() {
     setDialogOpen(false);
     setName("");
@@ -44,6 +56,26 @@ export function CampaignDashboard() {
     setEditingCampaign(null);
   }
 
+  function exportCampaign(campaign: Campaign) {
+    const link = document.createElement("a");
+    link.href = exportCampaignUrl(campaign.id);
+    link.download = `${campaign.name}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function handleImportFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setImportError(null);
+    importCampaign.mutate(file, {
+      onSuccess: (campaign) => navigate(`/campaigns/${campaign.id}`),
+      onError: (error) => setImportError(errorMessage(error)),
+    });
+  }
+
   return (
     <div>
       <TopAppBar
@@ -55,9 +87,22 @@ export function CampaignDashboard() {
       <div style={{ padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h1 style={{ margin: 0, fontSize: 20 }}>Your Campaigns</h1>
-          <Button onClick={() => setDialogOpen(true)}>New Campaign</Button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button variant="outlined" disabled={importCampaign.isPending} onClick={() => importInputRef.current?.click()}>
+              Import Campaign
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".zip"
+              style={{ display: "none" }}
+              onChange={handleImportFileChange}
+            />
+            <Button onClick={() => setDialogOpen(true)}>New Campaign</Button>
+          </div>
         </div>
 
+        {importError ? <ErrorBanner message={importError} onDismiss={() => setImportError(null)} /> : null}
         {isLoading ? <p>Loading…</p> : null}
         {campaigns && campaigns.length === 0 ? <p>No campaigns yet. Create your first one.</p> : null}
 
@@ -74,6 +119,14 @@ export function CampaignDashboard() {
                 ) : null}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ fontSize: 18, fontWeight: 500, flex: 1 }}>{campaign.name}</div>
+                  <IconButton
+                    icon="download"
+                    label={`Export ${campaign.name}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      exportCampaign(campaign);
+                    }}
+                  />
                   <IconButton
                     icon="edit"
                     label={`Edit ${campaign.name}`}

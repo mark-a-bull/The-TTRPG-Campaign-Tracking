@@ -9,4 +9,5 @@ export * from "./schemas/clue.js";
 export * from "./schemas/session.js";
 export * from "./schemas/battle.js";
 export * from "./schemas/entity-link.js";
+export * from "./schemas/campaign-export.js";
 export * from "./entities.js";

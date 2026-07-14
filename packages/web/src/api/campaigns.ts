@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Campaign, CampaignCreate, CampaignUpdate } from "@ttrpg/shared";
-import { apiFetch } from "./client.js";
+import { apiFetch, ApiError } from "./client.js";
 
 const campaignsKey = ["campaigns"] as const;
 const campaignKey = (id: string) => ["campaigns", id] as const;
@@ -45,6 +45,30 @@ export function useDeleteCampaign() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => apiFetch<void>(`/campaigns/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: campaignsKey }),
+  });
+}
+
+/** Not routed through apiFetch -- this is a browser-navigated file download, not a JSON call. */
+export function exportCampaignUrl(id: string): string {
+  return `/api/campaigns/${id}/export`;
+}
+
+async function importCampaign(file: File): Promise<Campaign> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/campaigns/import", { method: "POST", body: formData });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: response.statusText }));
+    throw new ApiError(response.status, body.message ?? response.statusText);
+  }
+  return response.json();
+}
+
+export function useImportCampaign() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: importCampaign,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: campaignsKey }),
   });
 }
