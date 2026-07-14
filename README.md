@@ -17,7 +17,14 @@ Implemented so far:
 - **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted locally per browser.
 - **Campaign export/import** — export a full campaign (every entity, session history, and uploaded image) to a single `.zip` file for moving between machines or backups; import it back in as a brand-new campaign. No merging/conflict resolution — re-importing an edited copy just creates another campaign.
 
-Not yet built: ruleset/plugin modules (stats are freeform for now), GM/player authentication, the player-facing view, the public display screen, Discord integration, and real-time (WebSocket) updates.
+Not yet built:
+
+- Ruleset/plugin modules (stats are freeform for now)
+- GM/player authentication
+- The player-facing view
+- The public display screen
+- Discord integration
+- Real-time (WebSocket) updates
 
 ## Tech stack
 
