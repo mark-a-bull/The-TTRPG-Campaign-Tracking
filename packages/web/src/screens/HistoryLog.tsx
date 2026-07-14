@@ -20,6 +20,7 @@ const EVENT_LABELS: Record<string, string> = {
   KO: "Knocked out",
   CLUE_REVEALED: "Clue revealed",
   CLUE_HIDDEN: "Clue hidden",
+  XP_AWARDED: "XP awarded",
 };
 
 function describeEvent(event: SessionEvent): string {
@@ -56,6 +57,10 @@ function describeEvent(event: SessionEvent): string {
       return typeof payload.clueTitle === "string" ? `Revealed: ${payload.clueTitle}` : "";
     case "CLUE_HIDDEN":
       return typeof payload.clueTitle === "string" ? `Hid: ${payload.clueTitle}` : "";
+    case "XP_AWARDED":
+      return typeof payload.pcName === "string"
+        ? `${payload.pcName} gained ${payload.amount} XP (total: ${payload.newXp})`
+        : "";
     default:
       return "";
   }

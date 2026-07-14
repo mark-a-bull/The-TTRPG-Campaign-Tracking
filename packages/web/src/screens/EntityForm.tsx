@@ -10,6 +10,8 @@ import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
 import { ClueRevealSection } from "./ClueRevealSection.js";
 import { EntityLinksSection } from "./EntityLinksSection.js";
+import { XpAwardSection } from "./XpAwardSection.js";
+import type { PC } from "@ttrpg/shared";
 
 interface EntityFormProps {
   entityType: EntityType;
@@ -125,6 +127,19 @@ export function EntityForm({
           );
         }
 
+        if (field.kind === "number") {
+          return (
+            <TextField
+              key={field.key}
+              label={field.label}
+              type="number"
+              value={value === undefined || value === null ? "" : String(value)}
+              onChange={(next) => setValue(field.key, next === "" ? "" : Number(next), { shouldDirty: true })}
+              errorText={errors[field.key]?.message as string | undefined}
+            />
+          );
+        }
+
         return (
           <TextField
             key={field.key}
@@ -136,6 +151,10 @@ export function EntityForm({
           />
         );
       })}
+
+      {initialValues && entityType === "pcs" ? (
+        <XpAwardSection campaignId={initialValues.campaignId as string} pc={initialValues as unknown as PC} readOnly={readOnly} />
+      ) : null}
 
       {initialValues && entityType === "clues" ? (
         <ClueRevealSection

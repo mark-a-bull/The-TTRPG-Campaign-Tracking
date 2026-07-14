@@ -10,7 +10,7 @@ interface TextFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "url";
+  type?: "text" | "url" | "number";
   required?: boolean;
   multiline?: boolean;
   rows?: number;

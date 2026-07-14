@@ -19,7 +19,7 @@ interface CrudDelegate<TRecord extends TimestampedRecord> {
   delete(args: { where: { id: string } }): Promise<TRecord>;
 }
 
-function serializeTimestamps<T extends TimestampedRecord>(record: T) {
+export function serializeTimestamps<T extends TimestampedRecord>(record: T) {
   return {
     ...record,
     createdAt: record.createdAt.toISOString(),
