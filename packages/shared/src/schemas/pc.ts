@@ -21,7 +21,9 @@ export const pcSchema = pcCreateSchema.extend({
 
 export const awardXpSchema = z.object({
   amount: z.number().int(),
+  level: z.number().int().min(1).optional(),
   note: z.string().max(500).optional(),
+  sessionId: idSchema.optional(),
 });
 
 export type PCCreate = z.input<typeof pcCreateSchema>;

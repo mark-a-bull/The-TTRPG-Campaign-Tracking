@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import type { AddGmNote, SessionCreate, SessionEvent, Session, SetLocation, PaginatedSessionEvents } from "@ttrpg/shared";
+import type {
+  AddGmNote,
+  SessionCreate,
+  Session,
+  SessionEvent,
+  SessionSummary,
+  SetLocation,
+  PaginatedSessionEvents,
+} from "@ttrpg/shared";
 import { apiFetch } from "./client.js";
 
 const sessionsKey = (campaignId: string) => ["campaigns", campaignId, "sessions"] as const;
@@ -7,6 +15,8 @@ const sessionKey = (campaignId: string, sessionId: string) =>
   ["campaigns", campaignId, "sessions", sessionId] as const;
 const sessionEventsKey = (campaignId: string, sessionId: string) =>
   ["campaigns", campaignId, "sessions", sessionId, "events"] as const;
+export const sessionSummaryKey = (campaignId: string, sessionId: string) =>
+  [...sessionKey(campaignId, sessionId), "summary"] as const;
 
 export function useSessions(campaignId: string | undefined) {
   return useQuery({
@@ -24,10 +34,10 @@ export function useSession(campaignId: string | undefined, sessionId: string | u
   });
 }
 
-export function useSessionEvents(campaignId: string | undefined, sessionId: string | undefined) {
+export function useSessionSummary(campaignId: string | undefined, sessionId: string | undefined) {
   return useQuery({
-    queryKey: sessionEventsKey(campaignId ?? "", sessionId ?? ""),
-    queryFn: () => apiFetch<SessionEvent[]>(`/campaigns/${campaignId}/sessions/${sessionId}/events`),
+    queryKey: sessionSummaryKey(campaignId ?? "", sessionId ?? ""),
+    queryFn: () => apiFetch<SessionSummary>(`/campaigns/${campaignId}/sessions/${sessionId}/summary`),
     enabled: Boolean(campaignId && sessionId),
   });
 }

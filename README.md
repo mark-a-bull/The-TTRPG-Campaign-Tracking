@@ -13,9 +13,10 @@ Implemented so far:
 - **Entity relationships** — link any two entities to each other with a label (optionally directional, with a separate reverse label), a hidden/revealed visibility flag, and notes. Links show on every linked entity's page, correctly oriented from each side.
 - **Clue/Mystery reveal mechanism** — reveal or hide a clue as a dedicated, session-logged action (not a silent field edit), optionally scoped to specific PCs instead of the whole party. Every reveal/hide shows up in the session's history log.
 - **XP & leveling (system-agnostic)** — PCs have a GM-editable Level field and an XP total that only changes through a dedicated "Award XP" action (with an optional note), logged to the session history when a session is active and usable outside a session too. No ruleset-specific thresholds or formulas yet — that's blocked on the ruleset/plugin system below.
+- **End-of-session summary** — a structured recap (locations visited, GM notes, clues revealed/hidden, battle stats, XP awarded, level changes) computed from the session's event log, shown automatically when a session ends and reopenable anytime from the History Log's "Summary" button. Includes a bulk award panel to give each PC XP and/or a new level in one pass, logged into that session's history even though it's already ended.
 - **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted locally per browser.
 
-Not yet built: ruleset/plugin modules (stats are freeform for now), GM/player authentication, the player-facing view, the public display screen, Discord integration, import/export, end-of-session summaries, and real-time (WebSocket) updates.
+Not yet built: ruleset/plugin modules (stats are freeform for now), GM/player authentication, the player-facing view, the public display screen, Discord integration, import/export, and real-time (WebSocket) updates.
 
 ## Tech stack
 
@@ -73,7 +74,6 @@ The long-term design covers more than what's built today. Roughly in the order t
 
 - **Ruleset/plugin modules** — the biggest gap between design and code; entities currently have only freeform fields, with no stats, mechanics, or formulas tied to a specific system.
 - **Auth** — GM login and player identities. This blocks the player-facing view, the public display screen, and Discord integration, which all assume auth exists first.
-- **End-of-session summary generation** — a GM-facing recap built from the session's event log.
 - **Real-time updates** — WebSocket push so the player view and public screen stay in sync live during a session.
 - **Import/export** — moving campaigns between machines, with conflict resolution for entities edited independently on both sides.
 

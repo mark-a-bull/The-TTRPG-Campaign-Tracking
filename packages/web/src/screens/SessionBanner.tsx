@@ -6,6 +6,7 @@ import { useAddGmNote, useEndSession, useSessions, useSetSessionLocation, useSta
 import { Button } from "../ui/Button.js";
 import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
+import { SessionSummaryDialog } from "./SessionSummaryDialog.js";
 
 interface SessionBannerProps {
   campaignId: string;
@@ -20,6 +21,7 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
   const [newTitle, setNewTitle] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [summarySessionId, setSummarySessionId] = useState<string | null>(null);
 
   const startSession = useStartSession(campaignId);
   const endSession = useEndSession(campaignId);
@@ -57,6 +59,12 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
             Start Session
           </Button>
         </div>
+        <SessionSummaryDialog
+          campaignId={campaignId}
+          sessionId={summarySessionId}
+          onClose={() => setSummarySessionId(null)}
+          allowAwards
+        />
       </div>
     );
   }
@@ -101,7 +109,10 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
           variant="outlined"
           disabled={endSession.isPending}
           onClick={() =>
-            endSession.mutate(activeSession.id, { onError: (err) => setError(errorMessage(err)) })
+            endSession.mutate(activeSession.id, {
+              onSuccess: () => setSummarySessionId(activeSession.id),
+              onError: (err) => setError(errorMessage(err)),
+            })
           }
         >
           End Session
@@ -147,6 +158,13 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
           Log Note
         </Button>
       </div>
+
+      <SessionSummaryDialog
+        campaignId={campaignId}
+        sessionId={summarySessionId}
+        onClose={() => setSummarySessionId(null)}
+        allowAwards
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import type { SessionEvent } from "@ttrpg/shared";
 import { useSession, useInfiniteSessionEvents } from "../api/sessions.js";
 import { Button } from "../ui/Button.js";
 import { TopAppBar } from "../ui/TopAppBar.js";
+import { SessionSummaryDialog } from "./SessionSummaryDialog.js";
 
 const EVENT_LABELS: Record<string, string> = {
   SESSION_STARTED: "Session started",
@@ -21,6 +22,8 @@ const EVENT_LABELS: Record<string, string> = {
   CLUE_REVEALED: "Clue revealed",
   CLUE_HIDDEN: "Clue hidden",
   XP_AWARDED: "XP awarded",
+  END_OF_SESSION_XP_AWARDED: "End-of-session XP awarded",
+  END_OF_SESSION_LEVEL_AWARDED: "End-of-session level awarded",
 };
 
 function describeEvent(event: SessionEvent): string {
@@ -57,10 +60,23 @@ function describeEvent(event: SessionEvent): string {
       return typeof payload.clueTitle === "string" ? `Revealed: ${payload.clueTitle}` : "";
     case "CLUE_HIDDEN":
       return typeof payload.clueTitle === "string" ? `Hid: ${payload.clueTitle}` : "";
-    case "XP_AWARDED":
+    case "XP_AWARDED": {
+      if (typeof payload.pcName !== "string") return "";
+      const parts: string[] = [];
+      if (typeof payload.amount === "number" && payload.amount !== 0) {
+        parts.push(`gained ${payload.amount} XP (total: ${payload.newXp})`);
+      }
+      if (typeof payload.newLevel === "number") {
+        parts.push(`reached Level ${payload.newLevel}`);
+      }
+      return parts.length > 0 ? `${payload.pcName} ${parts.join(" and ")}` : payload.pcName;
+    }
+    case "END_OF_SESSION_XP_AWARDED":
       return typeof payload.pcName === "string"
         ? `${payload.pcName} gained ${payload.amount} XP (total: ${payload.newXp})`
         : "";
+    case "END_OF_SESSION_LEVEL_AWARDED":
+      return typeof payload.pcName === "string" ? `${payload.pcName} reached Level ${payload.newLevel}` : "";
     default:
       return "";
   }
@@ -73,6 +89,7 @@ export function HistoryLog() {
   const [order, setOrder] = useState<"asc" | "desc">(() => {
     return (localStorage.getItem("ttrpg-history-sort") as "asc" | "desc") || "desc";
   });
+  const [showSummary, setShowSummary] = useState(false);
 
   // Persist sort preference
   const handleSortChange = (newOrder: "asc" | "desc") => {
@@ -119,12 +136,17 @@ export function HistoryLog() {
           </Button>
         }
         trailing={
-          <Button
-            variant="text"
-            onClick={() => handleSortChange(order === "asc" ? "desc" : "asc")}
-          >
-            {order === "asc" ? "↓ Oldest first" : "↑ Newest first"}
-          </Button>
+          <>
+            <Button variant="text" onClick={() => setShowSummary(true)}>
+              Summary
+            </Button>
+            <Button
+              variant="text"
+              onClick={() => handleSortChange(order === "asc" ? "desc" : "asc")}
+            >
+              {order === "asc" ? "↓ Oldest first" : "↑ Newest first"}
+            </Button>
+          </>
         }
       />
       <div style={{ padding: 24, maxWidth: 720 }}>
@@ -172,6 +194,12 @@ export function HistoryLog() {
           </p>
         )}
       </div>
+
+      <SessionSummaryDialog
+        campaignId={campaignId ?? ""}
+        sessionId={showSummary ? sessionId ?? null : null}
+        onClose={() => setShowSummary(false)}
+      />
     </div>
   );
 }
