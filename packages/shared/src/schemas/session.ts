@@ -66,6 +66,24 @@ export const paginatedSessionEventsSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const sessionSummarySchema = z.object({
+  sessionId: idSchema,
+  title: z.string(),
+  startedAt: z.string().datetime(),
+  endedAt: z.string().datetime().nullable(),
+  eventCount: z.number(),
+  locationsVisited: z.array(z.string()),
+  gmNotes: z.array(z.string()),
+  cluesRevealed: z.array(z.string()),
+  cluesHidden: z.array(z.string()),
+  battlesFought: z.number(),
+  totalDamage: z.number(),
+  totalHealing: z.number(),
+  knockouts: z.array(z.string()),
+  xpAwards: z.array(z.object({ pcName: z.string(), amount: z.number() })),
+  totalXpAwarded: z.number(),
+});
+
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 export type ActorType = z.infer<typeof actorTypeSchema>;
 export type SessionEventType = z.infer<typeof sessionEventTypeSchema>;
@@ -75,3 +93,4 @@ export type SetLocation = z.input<typeof setLocationSchema>;
 export type AddGmNote = z.input<typeof addGmNoteSchema>;
 export type SessionEvent = z.infer<typeof sessionEventSchema>;
 export type PaginatedSessionEvents = z.infer<typeof paginatedSessionEventsSchema>;
+export type SessionSummary = z.infer<typeof sessionSummarySchema>;

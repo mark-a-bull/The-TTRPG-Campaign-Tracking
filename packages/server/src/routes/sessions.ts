@@ -6,6 +6,7 @@ import {
   sessionCreateSchema,
   sessionEventSchema,
   sessionSchema,
+  sessionSummarySchema,
   setLocationSchema,
   type SessionStatus,
 } from "@ttrpg/shared";
@@ -26,6 +27,86 @@ function serializeSession<
     endedAt: session.endedAt ? session.endedAt.toISOString() : null,
     createdAt: session.createdAt.toISOString(),
     updatedAt: session.updatedAt.toISOString(),
+  };
+}
+
+// Aggregates the full event log for a session into a structured recap. This
+// intentionally bypasses the paginated /events route (offset/limit, max 100)
+// since a summary needs the whole log, not a page of it. Payload field names
+// mirror packages/web/src/screens/HistoryLog.tsx's describeEvent, which reads
+// the same event types.
+async function buildSessionSummary(session: { id: string; title: string; startedAt: Date; endedAt: Date | null }) {
+  const events = await prisma.sessionEvent.findMany({
+    where: { sessionId: session.id },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const locationsVisited: string[] = [];
+  const gmNotes: string[] = [];
+  const cluesRevealed: string[] = [];
+  const cluesHidden: string[] = [];
+  const knockouts: string[] = [];
+  const xpAwards: { pcName: string; amount: number }[] = [];
+  let battlesFought = 0;
+  let totalDamage = 0;
+  let totalHealing = 0;
+
+  for (const event of events) {
+    const payload = JSON.parse(event.payload) as Record<string, unknown>;
+    switch (event.type) {
+      case "LOCATION_CHANGED":
+        if (
+          typeof payload.locationName === "string" &&
+          locationsVisited[locationsVisited.length - 1] !== payload.locationName
+        ) {
+          locationsVisited.push(payload.locationName);
+        }
+        break;
+      case "GM_NOTE":
+        if (typeof payload.note === "string") gmNotes.push(payload.note);
+        break;
+      case "CLUE_REVEALED":
+        if (typeof payload.clueTitle === "string") cluesRevealed.push(payload.clueTitle);
+        break;
+      case "CLUE_HIDDEN":
+        if (typeof payload.clueTitle === "string") cluesHidden.push(payload.clueTitle);
+        break;
+      case "BATTLE_STARTED":
+        battlesFought += 1;
+        break;
+      case "DAMAGE_APPLIED":
+        if (payload.applied !== false && typeof payload.amount === "number") totalDamage += payload.amount;
+        break;
+      case "HEALING_APPLIED":
+        if (payload.applied !== false && typeof payload.amount === "number") totalHealing += payload.amount;
+        break;
+      case "KO":
+        if (typeof payload.targetName === "string") knockouts.push(payload.targetName);
+        break;
+      case "XP_AWARDED":
+        if (typeof payload.pcName === "string" && typeof payload.amount === "number") {
+          xpAwards.push({ pcName: payload.pcName, amount: payload.amount });
+        }
+        break;
+    }
+  }
+
+  return {
+    sessionId: session.id,
+    title: session.title,
+    startedAt: session.startedAt.toISOString(),
+    endedAt: session.endedAt ? session.endedAt.toISOString() : null,
+    eventCount: events.length,
+    locationsVisited,
+    gmNotes,
+    cluesRevealed,
+    cluesHidden,
+    battlesFought,
+    totalDamage,
+    totalHealing,
+    knockouts,
+    xpAwards,
+    totalXpAwarded: xpAwards.reduce((sum, award) => sum + award.amount, 0),
   };
 }
 
@@ -225,6 +306,24 @@ export function registerSessionRoutes(app: FastifyInstance) {
         total,
         hasMore: offset + limit < total,
       };
+    },
+  );
+
+  typed.get(
+    "/api/campaigns/:campaignId/sessions/:id/summary",
+    {
+      schema: {
+        params: sessionParams,
+        response: { 200: sessionSummarySchema, 404: errorResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { campaignId, id } = request.params;
+      const session = await prisma.session.findFirst({ where: { id, campaignId } });
+      if (!session) {
+        return reply.code(404).send({ message: "Session not found" });
+      }
+      return buildSessionSummary(session);
     },
   );
 }
