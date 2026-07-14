@@ -37,14 +37,41 @@ export function registerPcRoutes(app: FastifyInstance) {
         return reply.code(404).send({ message: "Not found" });
       }
 
-      const { amount, note } = request.body;
+      const { amount, note, level, sessionId } = request.body;
       const newXp = Math.max(0, pc.xp + amount);
-      const updated = await prisma.pc.update({ where: { id }, data: { xp: newXp } });
+      const levelChanged = level !== undefined && level !== pc.level;
 
-      const activeSession = await prisma.session.findFirst({ where: { campaignId, status: "active" } });
-      if (activeSession) {
-        await appendSessionEvent(activeSession.id, campaignId, "XP_AWARDED", {
-          payload: { pcId: pc.id, pcName: pc.name, amount, newXp, note },
+      const updated = await prisma.pc.update({
+        where: { id },
+        data: { xp: newXp, ...(levelChanged ? { level } : {}) },
+      });
+
+      // An explicit sessionId (e.g. from the end-of-session summary's bulk
+      // award panel) targets that session directly, regardless of its
+      // status -- the summary is shown right after a session ends, so by
+      // then there's no "active" session left for the fallback below to
+      // find. Without an explicit sessionId, fall back to the active
+      // session (the standalone per-PC Award XP action's behavior).
+      let targetSession: { id: string } | null;
+      if (sessionId) {
+        targetSession = await prisma.session.findFirst({ where: { id: sessionId, campaignId } });
+        if (!targetSession) {
+          return reply.code(404).send({ message: "Session not found" });
+        }
+      } else {
+        targetSession = await prisma.session.findFirst({ where: { campaignId, status: "active" } });
+      }
+
+      if (targetSession) {
+        await appendSessionEvent(targetSession.id, campaignId, "XP_AWARDED", {
+          payload: {
+            pcId: pc.id,
+            pcName: pc.name,
+            amount,
+            newXp,
+            note,
+            ...(levelChanged ? { previousLevel: pc.level, newLevel: level } : {}),
+          },
         });
       }
 

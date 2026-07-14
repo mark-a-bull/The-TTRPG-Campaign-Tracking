@@ -7,6 +7,7 @@ describe("PC XP awards", () => {
   let app: FastifyInstance;
   let campaignId: string;
   let pcId: string;
+  let endedSessionId: string;
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
@@ -75,6 +76,36 @@ describe("PC XP awards", () => {
     });
 
     await app.inject({ method: "POST", url: `/api/campaigns/${campaignId}/sessions/${sessionId}/end` });
+    endedSessionId = sessionId;
+  });
+
+  it("logs into an explicit sessionId even though that session has already ended, and can change level", async () => {
+    const awardRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/pcs/${pcId}/award-xp`,
+      payload: { amount: 20, level: 2, sessionId: endedSessionId },
+    });
+    expect(awardRes.statusCode).toBe(200);
+    expect(awardRes.json().level).toBe(2);
+
+    const eventsRes = await app.inject({
+      method: "GET",
+      url: `/api/campaigns/${campaignId}/sessions/${endedSessionId}/events`,
+    });
+    const events = eventsRes.json().events;
+    const xpEvents = events.filter((event: { type: string }) => event.type === "XP_AWARDED");
+    const levelUpEvent = xpEvents.find((event: { payload: { newLevel?: number } }) => event.payload.newLevel === 2);
+    expect(levelUpEvent).toBeDefined();
+    expect(levelUpEvent.payload).toMatchObject({ pcId, pcName: "Rell Ashwood", previousLevel: 1, newLevel: 2 });
+  });
+
+  it("404s for a sessionId that doesn't belong to the campaign", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/pcs/${pcId}/award-xp`,
+      payload: { amount: 10, sessionId: "00000000-0000-0000-0000-000000000000" },
+    });
+    expect(res.statusCode).toBe(404);
   });
 
   it("clamps xp at 0 on a large negative correction", async () => {

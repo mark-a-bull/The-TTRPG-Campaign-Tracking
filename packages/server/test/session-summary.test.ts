@@ -109,7 +109,7 @@ describe("session summary", () => {
     await app.inject({
       method: "POST",
       url: `/api/campaigns/${campaignId}/pcs/${pcId}/award-xp`,
-      payload: { amount: 50, note: "Solved the riddle" },
+      payload: { amount: 50, note: "Solved the riddle", level: 2 },
     });
 
     const battleRes = await app.inject({
@@ -168,5 +168,6 @@ describe("session summary", () => {
     expect(summary.knockouts).toEqual(["Kira Stormwind"]);
     expect(summary.xpAwards).toEqual([{ pcName: "Kira Stormwind", amount: 50 }]);
     expect(summary.totalXpAwarded).toBe(50);
+    expect(summary.levelChanges).toEqual([{ pcName: "Kira Stormwind", newLevel: 2 }]);
   });
 });

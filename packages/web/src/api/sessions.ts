@@ -15,6 +15,8 @@ const sessionKey = (campaignId: string, sessionId: string) =>
   ["campaigns", campaignId, "sessions", sessionId] as const;
 const sessionEventsKey = (campaignId: string, sessionId: string) =>
   ["campaigns", campaignId, "sessions", sessionId, "events"] as const;
+export const sessionSummaryKey = (campaignId: string, sessionId: string) =>
+  [...sessionKey(campaignId, sessionId), "summary"] as const;
 
 export function useSessions(campaignId: string | undefined) {
   return useQuery({
@@ -34,7 +36,7 @@ export function useSession(campaignId: string | undefined, sessionId: string | u
 
 export function useSessionSummary(campaignId: string | undefined, sessionId: string | undefined) {
   return useQuery({
-    queryKey: [...sessionKey(campaignId ?? "", sessionId ?? ""), "summary"],
+    queryKey: sessionSummaryKey(campaignId ?? "", sessionId ?? ""),
     queryFn: () => apiFetch<SessionSummary>(`/campaigns/${campaignId}/sessions/${sessionId}/summary`),
     enabled: Boolean(campaignId && sessionId),
   });

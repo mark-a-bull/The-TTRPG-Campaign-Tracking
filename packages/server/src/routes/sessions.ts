@@ -47,6 +47,7 @@ async function buildSessionSummary(session: { id: string; title: string; started
   const cluesHidden: string[] = [];
   const knockouts: string[] = [];
   const xpAwards: { pcName: string; amount: number }[] = [];
+  const levelChanges: { pcName: string; newLevel: number }[] = [];
   let battlesFought = 0;
   let totalDamage = 0;
   let totalHealing = 0;
@@ -87,6 +88,9 @@ async function buildSessionSummary(session: { id: string; title: string; started
         if (typeof payload.pcName === "string" && typeof payload.amount === "number") {
           xpAwards.push({ pcName: payload.pcName, amount: payload.amount });
         }
+        if (typeof payload.pcName === "string" && typeof payload.newLevel === "number") {
+          levelChanges.push({ pcName: payload.pcName, newLevel: payload.newLevel });
+        }
         break;
     }
   }
@@ -107,6 +111,7 @@ async function buildSessionSummary(session: { id: string; title: string; started
     knockouts,
     xpAwards,
     totalXpAwarded: xpAwards.reduce((sum, award) => sum + award.amount, 0),
+    levelChanges,
   };
 }
 

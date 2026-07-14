@@ -58,10 +58,17 @@ function describeEvent(event: SessionEvent): string {
       return typeof payload.clueTitle === "string" ? `Revealed: ${payload.clueTitle}` : "";
     case "CLUE_HIDDEN":
       return typeof payload.clueTitle === "string" ? `Hid: ${payload.clueTitle}` : "";
-    case "XP_AWARDED":
-      return typeof payload.pcName === "string"
-        ? `${payload.pcName} gained ${payload.amount} XP (total: ${payload.newXp})`
-        : "";
+    case "XP_AWARDED": {
+      if (typeof payload.pcName !== "string") return "";
+      const parts: string[] = [];
+      if (typeof payload.amount === "number" && payload.amount !== 0) {
+        parts.push(`gained ${payload.amount} XP (total: ${payload.newXp})`);
+      }
+      if (typeof payload.newLevel === "number") {
+        parts.push(`reached Level ${payload.newLevel}`);
+      }
+      return parts.length > 0 ? `${payload.pcName} ${parts.join(" and ")}` : payload.pcName;
+    }
     default:
       return "";
   }

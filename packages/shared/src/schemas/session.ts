@@ -82,6 +82,7 @@ export const sessionSummarySchema = z.object({
   knockouts: z.array(z.string()),
   xpAwards: z.array(z.object({ pcName: z.string(), amount: z.number() })),
   totalXpAwarded: z.number(),
+  levelChanges: z.array(z.object({ pcName: z.string(), newLevel: z.number() })),
 });
 
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
