@@ -7,6 +7,8 @@ interface SessionSummaryDialogProps {
   campaignId: string;
   sessionId: string | null;
   onClose: () => void;
+  /** Only true right after clicking "End Session" -- reopening the summary later (e.g. from the History Log) is read-only. */
+  allowAwards?: boolean;
 }
 
 function Section({ label, items }: { label: string; items: string[] }) {
@@ -25,7 +27,7 @@ function Section({ label, items }: { label: string; items: string[] }) {
   );
 }
 
-export function SessionSummaryDialog({ campaignId, sessionId, onClose }: SessionSummaryDialogProps) {
+export function SessionSummaryDialog({ campaignId, sessionId, onClose, allowAwards }: SessionSummaryDialogProps) {
   const { data: summary, isLoading } = useSessionSummary(campaignId, sessionId ?? undefined);
 
   return (
@@ -81,7 +83,7 @@ export function SessionSummaryDialog({ campaignId, sessionId, onClose }: Session
                 />
               </>
             )}
-            {sessionId ? <SessionAwardsSection campaignId={campaignId} sessionId={sessionId} /> : null}
+            {allowAwards && sessionId ? <SessionAwardsSection campaignId={campaignId} sessionId={sessionId} /> : null}
           </>
         )}
       </div>

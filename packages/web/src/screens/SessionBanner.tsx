@@ -63,6 +63,7 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
           campaignId={campaignId}
           sessionId={summarySessionId}
           onClose={() => setSummarySessionId(null)}
+          allowAwards
         />
       </div>
     );
@@ -162,6 +163,7 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
         campaignId={campaignId}
         sessionId={summarySessionId}
         onClose={() => setSummarySessionId(null)}
+        allowAwards
       />
     </div>
   );
