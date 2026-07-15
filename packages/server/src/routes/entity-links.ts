@@ -19,7 +19,7 @@ const linkEntityTypeSchema = z.enum(entityTypes);
 // the cast narrows to the literal unions the Zod response schema expects.
 // Runtime values are always one of the literals since they're only ever
 // written through the typed create/update paths below.
-function serializeLink<
+export function serializeLink<
   T extends { fromType: string; toType: string; visibility: string; createdAt: Date; updatedAt: Date },
 >(link: T) {
   return {

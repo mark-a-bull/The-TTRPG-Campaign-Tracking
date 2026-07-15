@@ -17,9 +17,32 @@ import {
 } from "@ttrpg/shared";
 import { errorResponseSchema } from "../error-response.js";
 import { prisma } from "../prisma.js";
+import { serializeSessionEvent } from "../session-events.js";
 import { ASSETS_DIR } from "./assets.js";
+import { serializeClue } from "./clues.js";
+import { serializeLink } from "./entity-links.js";
+import { serializeTimestamps } from "./nested-entity.js";
+import { serializeSession } from "./sessions.js";
 
 // ---------- export ----------
+
+/** Strips `campaignId` from a serialize helper's output -- the export schema
+ * omits it (a fresh campaignId is assigned on import instead). */
+function withoutCampaignId<T extends { campaignId: unknown }>({
+  campaignId: _campaignId,
+  ...rest
+}: T): Omit<T, "campaignId"> {
+  return rest;
+}
+
+/** Same, but for SessionEvent's shape, which also carries `sessionId`. */
+function withoutSessionAndCampaignId<T extends { sessionId: unknown; campaignId: unknown }>({
+  sessionId: _sessionId,
+  campaignId: _campaignId,
+  ...rest
+}: T): Omit<T, "sessionId" | "campaignId"> {
+  return rest;
+}
 
 async function buildCampaignExport(campaignId: string): Promise<CampaignExport | null> {
   const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
@@ -57,97 +80,60 @@ async function buildCampaignExport(campaignId: string): Promise<CampaignExport |
       createdAt: campaign.createdAt.toISOString(),
       updatedAt: campaign.updatedAt.toISOString(),
     },
-    pcs: pcs.map((pc) => ({
-      ...pc,
-      createdAt: pc.createdAt.toISOString(),
-      updatedAt: pc.updatedAt.toISOString(),
-    })),
-    npcs: npcs.map((npc) => ({
-      ...npc,
-      createdAt: npc.createdAt.toISOString(),
-      updatedAt: npc.updatedAt.toISOString(),
-    })),
-    monsters: monsters.map((monster) => ({
-      ...monster,
-      createdAt: monster.createdAt.toISOString(),
-      updatedAt: monster.updatedAt.toISOString(),
-    })),
-    locations: locations.map((location) => ({
-      ...location,
-      createdAt: location.createdAt.toISOString(),
-      updatedAt: location.updatedAt.toISOString(),
-    })),
+    pcs: pcs.map((pc) => withoutCampaignId(serializeTimestamps(pc))),
+    npcs: npcs.map((npc) => withoutCampaignId(serializeTimestamps(npc))),
+    monsters: monsters.map((monster) => withoutCampaignId(serializeTimestamps(monster))),
+    locations: locations.map((location) => withoutCampaignId(serializeTimestamps(location))),
     mysteries: mysteries.map((mystery) => ({
-      ...mystery,
+      ...withoutCampaignId(serializeTimestamps(mystery)),
       status: mystery.status as CampaignExport["mysteries"][number]["status"],
-      createdAt: mystery.createdAt.toISOString(),
-      updatedAt: mystery.updatedAt.toISOString(),
     })),
-    clues: clues.map((clue) => ({
-      ...clue,
-      visibility: clue.visibility as CampaignExport["clues"][number]["visibility"],
-      visibleTo: clue.visibleTo ? (JSON.parse(clue.visibleTo) as string[]) : [],
-      createdAt: clue.createdAt.toISOString(),
-      updatedAt: clue.updatedAt.toISOString(),
-    })),
-    sessions: sessions.map((session) => ({
-      id: session.id,
-      title: session.title,
-      status: session.status as SessionExport["status"],
-      currentLocationId: session.currentLocationId,
-      startedAt: session.startedAt.toISOString(),
-      endedAt: session.endedAt ? session.endedAt.toISOString() : null,
-      createdAt: session.createdAt.toISOString(),
-      updatedAt: session.updatedAt.toISOString(),
-      events: session.events.map((event) => ({
-        id: event.id,
-        type: event.type as SessionExport["events"][number]["type"],
-        actorType: event.actorType as ActorType | null,
-        actorId: event.actorId,
-        targetType: event.targetType as ActorType | null,
-        targetId: event.targetId,
-        payload: JSON.parse(event.payload) as Record<string, unknown>,
-        createdAt: event.createdAt.toISOString(),
-      })),
-      battles: session.battles.map((battle) => ({
-        id: battle.id,
-        status: battle.status as BattleExport["status"],
-        currentTurnIndex: battle.currentTurnIndex,
-        createdAt: battle.createdAt.toISOString(),
-        updatedAt: battle.updatedAt.toISOString(),
-        entries: battle.entries.map((entry) => ({
-          id: entry.id,
-          battleEncounterId: entry.battleEncounterId,
-          actorType: entry.actorType as ActorType | null,
-          actorId: entry.actorId,
-          adHocName: entry.adHocName,
-          initiative: entry.initiative,
-          currentHp: entry.currentHp,
-          maxHp: entry.maxHp,
-          order: entry.order,
-          createdAt: entry.createdAt.toISOString(),
-          updatedAt: entry.updatedAt.toISOString(),
-          statuses: entry.statuses.map((status) => ({
-            id: status.id,
-            initiativeEntryId: status.initiativeEntryId,
-            sourceEntryId: status.sourceEntryId,
-            label: status.label,
-            note: status.note,
-            appliedAtTurn: status.appliedAtTurn,
-            expired: status.expired,
-            createdAt: status.createdAt.toISOString(),
+    clues: clues.map((clue) => withoutCampaignId(serializeClue(clue))),
+    sessions: sessions.map((session) => {
+      const serialized = serializeSession(session);
+      return {
+        id: serialized.id,
+        title: serialized.title,
+        status: serialized.status as SessionExport["status"],
+        currentLocationId: serialized.currentLocationId,
+        startedAt: serialized.startedAt,
+        endedAt: serialized.endedAt,
+        createdAt: serialized.createdAt,
+        updatedAt: serialized.updatedAt,
+        events: session.events.map((event) => withoutSessionAndCampaignId(serializeSessionEvent(event))),
+        battles: session.battles.map((battle) => ({
+          id: battle.id,
+          status: battle.status as BattleExport["status"],
+          currentTurnIndex: battle.currentTurnIndex,
+          createdAt: battle.createdAt.toISOString(),
+          updatedAt: battle.updatedAt.toISOString(),
+          entries: battle.entries.map((entry) => ({
+            id: entry.id,
+            battleEncounterId: entry.battleEncounterId,
+            actorType: entry.actorType as ActorType | null,
+            actorId: entry.actorId,
+            adHocName: entry.adHocName,
+            initiative: entry.initiative,
+            currentHp: entry.currentHp,
+            maxHp: entry.maxHp,
+            order: entry.order,
+            createdAt: entry.createdAt.toISOString(),
+            updatedAt: entry.updatedAt.toISOString(),
+            statuses: entry.statuses.map((status) => ({
+              id: status.id,
+              initiativeEntryId: status.initiativeEntryId,
+              sourceEntryId: status.sourceEntryId,
+              label: status.label,
+              note: status.note,
+              appliedAtTurn: status.appliedAtTurn,
+              expired: status.expired,
+              createdAt: status.createdAt.toISOString(),
+            })),
           })),
         })),
-      })),
-    })),
-    entityLinks: entityLinks.map((link) => ({
-      ...link,
-      fromType: link.fromType as EntityType,
-      toType: link.toType as EntityType,
-      visibility: link.visibility as CampaignExport["entityLinks"][number]["visibility"],
-      createdAt: link.createdAt.toISOString(),
-      updatedAt: link.updatedAt.toISOString(),
-    })),
+      };
+    }),
+    entityLinks: entityLinks.map((link) => withoutCampaignId(serializeLink(link))),
   };
 }
 
@@ -204,6 +190,32 @@ function actorIdMapFor(ctx: ImportContext, actorType: ActorType): Map<string, st
   }
 }
 
+/**
+ * Assigns a fresh id to each item (recorded into `idMap`, keyed by the old
+ * id) and rewrites its campaignId, ready for a `createMany`. Only valid for
+ * entity types that don't need any other cross-reference resolved against
+ * sibling rows created in the same import -- pcs/npcs/monsters/locations/
+ * mysteries qualify; clues (mysteryId/visibleTo), sessions, and everything
+ * under them don't, and are built by hand below instead.
+ */
+function remapFlatEntities<T extends { id: string; createdAt: string; updatedAt: string }>(
+  items: T[],
+  idMap: Map<string, string>,
+  newCampaignId: string,
+): (Omit<T, "id" | "createdAt" | "updatedAt"> & {
+  id: string;
+  campaignId: string;
+  createdAt: Date;
+  updatedAt: Date;
+})[] {
+  return items.map((item) => {
+    const newId = randomUUID();
+    idMap.set(item.id, newId);
+    const { id: _id, createdAt, updatedAt, ...rest } = item;
+    return { ...rest, id: newId, campaignId: newCampaignId, createdAt: new Date(createdAt), updatedAt: new Date(updatedAt) };
+  });
+}
+
 // Every record gets a freshly generated id on import (never the id it was
 // exported with) so re-importing the same export twice can't collide with
 // the first import's rows. Every cross-reference is rewritten through the id
@@ -239,69 +251,21 @@ async function importCampaignExport(data: CampaignExport) {
     }),
   );
 
-  for (const pc of data.pcs) {
-    const newId = randomUUID();
-    ctx.pcIdMap.set(pc.id, newId);
-    operations.push(
-      prisma.pc.create({
-        data: { ...pc, id: newId, campaignId: newCampaignId, createdAt: new Date(pc.createdAt), updatedAt: new Date(pc.updatedAt) },
-      }),
-    );
-  }
-  for (const npc of data.npcs) {
-    const newId = randomUUID();
-    ctx.npcIdMap.set(npc.id, newId);
-    operations.push(
-      prisma.npc.create({
-        data: { ...npc, id: newId, campaignId: newCampaignId, createdAt: new Date(npc.createdAt), updatedAt: new Date(npc.updatedAt) },
-      }),
-    );
-  }
-  for (const monster of data.monsters) {
-    const newId = randomUUID();
-    ctx.monsterIdMap.set(monster.id, newId);
-    operations.push(
-      prisma.monster.create({
-        data: {
-          ...monster,
-          id: newId,
-          campaignId: newCampaignId,
-          createdAt: new Date(monster.createdAt),
-          updatedAt: new Date(monster.updatedAt),
-        },
-      }),
-    );
-  }
-  for (const location of data.locations) {
-    const newId = randomUUID();
-    ctx.locationIdMap.set(location.id, newId);
-    operations.push(
-      prisma.location.create({
-        data: {
-          ...location,
-          id: newId,
-          campaignId: newCampaignId,
-          createdAt: new Date(location.createdAt),
-          updatedAt: new Date(location.updatedAt),
-        },
-      }),
-    );
-  }
-  for (const mystery of data.mysteries) {
-    const newId = randomUUID();
-    ctx.mysteryIdMap.set(mystery.id, newId);
-    operations.push(
-      prisma.mystery.create({
-        data: {
-          ...mystery,
-          id: newId,
-          campaignId: newCampaignId,
-          createdAt: new Date(mystery.createdAt),
-          updatedAt: new Date(mystery.updatedAt),
-        },
-      }),
-    );
-  }
+  // Flat entity types: no per-row remapping needed beyond the new
+  // campaignId, so each type is one createMany instead of N individual
+  // creates.
+  operations.push(prisma.pc.createMany({ data: remapFlatEntities(data.pcs, ctx.pcIdMap, newCampaignId) }));
+  operations.push(prisma.npc.createMany({ data: remapFlatEntities(data.npcs, ctx.npcIdMap, newCampaignId) }));
+  operations.push(
+    prisma.monster.createMany({ data: remapFlatEntities(data.monsters, ctx.monsterIdMap, newCampaignId) }),
+  );
+  operations.push(
+    prisma.location.createMany({ data: remapFlatEntities(data.locations, ctx.locationIdMap, newCampaignId) }),
+  );
+  operations.push(
+    prisma.mystery.createMany({ data: remapFlatEntities(data.mysteries, ctx.mysteryIdMap, newCampaignId) }),
+  );
+
   for (const clue of data.clues) {
     const newId = randomUUID();
     ctx.clueIdMap.set(clue.id, newId);
@@ -491,25 +455,44 @@ export function registerCampaignTransferRoutes(app: FastifyInstance) {
       return reply.code(400).send({ message: "Invalid campaign id" });
     }
 
-    const data = await buildCampaignExport(params.data.id);
-    if (!data) {
+    const built = await buildCampaignExport(params.data.id);
+    if (!built) {
       return reply.code(404).send({ message: "Campaign not found" });
     }
+
+    // Validate the assembled export against the same schema import enforces,
+    // rather than trusting the `as` casts sprinkled through
+    // buildCampaignExport. Catches a stale/invalid DB value (e.g. an enum
+    // string from a prior schema version) here, with a clear 500, instead of
+    // producing a zip that fails to import later with no useful detail.
+    const validated = campaignExportSchema.safeParse(built);
+    if (!validated.success) {
+      request.log.error({ err: validated.error }, "Campaign export data failed schema validation");
+      return reply.code(500).send({ message: "Failed to export campaign: exported data was malformed" });
+    }
+    const data = validated.data;
 
     const zip = new JSZip();
     zip.file("campaign.json", JSON.stringify(data, null, 2));
 
     const assetsFolder = zip.folder("assets")!;
-    for (const assetPath of collectAssetPaths(data)) {
-      const filename = path.basename(assetPath);
-      try {
-        assetsFolder.file(filename, await readFile(path.join(ASSETS_DIR, filename)));
-      } catch {
-        // Referenced asset missing on disk -- skip it rather than failing
-        // the whole export, same "degrade gracefully" tradeoff the app
-        // already makes for dangling entity references.
-      }
-    }
+    await Promise.all(
+      collectAssetPaths(data).map(async (assetPath) => {
+        const filename = path.basename(assetPath);
+        try {
+          assetsFolder.file(filename, await readFile(path.join(ASSETS_DIR, filename)));
+        } catch (err) {
+          // A missing file (ENOENT) is expected and skipped, same
+          // "degrade gracefully" tradeoff the app already makes for
+          // dangling entity references. Anything else (permissions,
+          // transient I/O error) is logged rather than silently dropped,
+          // so a real problem doesn't look identical to "file deleted".
+          if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+            request.log.warn({ err, filename }, "Failed to read asset file for campaign export");
+          }
+        }
+      }),
+    );
 
     const buffer = await zip.generateAsync({ type: "nodebuffer" });
     const safeName = data.campaign.name.replace(/[^a-z0-9-_ ]/gi, "").trim() || "campaign";
@@ -523,7 +506,10 @@ export function registerCampaignTransferRoutes(app: FastifyInstance) {
     "/api/campaigns/import",
     { schema: { response: { 201: campaignSchema, 400: errorResponseSchema } } },
     async (request, reply) => {
-      const file = await request.file();
+      // Overridden per-request rather than raising the app-wide multipart
+      // limit (app.ts) -- a campaign zip can bundle many images, but that
+      // shouldn't also loosen the unrelated single-asset-upload route's cap.
+      const file = await request.file({ limits: { fileSize: 50 * 1024 * 1024 } });
       if (!file) {
         return reply.code(400).send({ message: "No file uploaded" });
       }
@@ -559,10 +545,14 @@ export function registerCampaignTransferRoutes(app: FastifyInstance) {
       const campaign = await importCampaignExport(parsed.data);
 
       await mkdir(ASSETS_DIR, { recursive: true });
-      for (const [relPath, entry] of Object.entries(zip.files) as [string, JSZip.JSZipObject][]) {
-        if (entry.dir || !relPath.startsWith("assets/")) continue;
-        await writeFile(path.join(ASSETS_DIR, path.basename(relPath)), await entry.async("nodebuffer"));
-      }
+      const assetEntries = Object.entries(zip.files).filter(
+        ([relPath, entry]) => !entry.dir && relPath.startsWith("assets/"),
+      ) as [string, JSZip.JSZipObject][];
+      await Promise.all(
+        assetEntries.map(async ([relPath, entry]) => {
+          await writeFile(path.join(ASSETS_DIR, path.basename(relPath)), await entry.async("nodebuffer"));
+        }),
+      );
 
       return reply.code(201).send(campaign);
     },

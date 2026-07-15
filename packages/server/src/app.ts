@@ -23,9 +23,11 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   app.setSerializerCompiler(serializerCompiler);
 
   await app.register(cors, { origin: true });
-  // 50MB, not 10MB like a single asset upload -- a campaign export/import
-  // zip can bundle many images at once.
-  await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
+  // 10MB default, matching a single asset upload. The campaign-import route
+  // (routes/campaign-transfer.ts) overrides this per-request to 50MB for its
+  // zip uploads instead of raising it here, so this default doesn't also
+  // silently loosen the unrelated single-image asset-upload route's limit.
+  await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024 } });
   await app.register(fastifyStatic, { root: ASSETS_DIR, prefix: "/assets/", decorateReply: false });
 
   registerCampaignRoutes(app);

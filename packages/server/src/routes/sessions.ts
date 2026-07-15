@@ -17,7 +17,7 @@ import { appendSessionEvent, serializeSessionEvent } from "../session-events.js"
 // `status` is a plain `string` in Prisma (SQLite has no native enum); the cast
 // narrows to the literal union the Zod response schema expects. Runtime values
 // are always one of the literals since they're only ever written as literals.
-function serializeSession<
+export function serializeSession<
   T extends { status: string; startedAt: Date; endedAt: Date | null; createdAt: Date; updatedAt: Date },
 >(session: T) {
   return {
