@@ -6,7 +6,7 @@ import { errorResponseSchema } from "../error-response.js";
 import { prisma } from "../prisma.js";
 import { appendSessionEvent } from "../session-events.js";
 
-interface ClueRecord {
+export interface ClueRecord {
   id: string;
   campaignId: string;
   mysteryId: string | null;
@@ -27,7 +27,7 @@ interface ClueRecord {
 // back out as `[]` rather than `null`: a nullable array in the response
 // schema compiles to a JSON-schema `anyOf` that fast-json-stringify silently
 // drops the field for, so the DB-level null is normalized away here.
-function serializeClue(clue: ClueRecord) {
+export function serializeClue(clue: ClueRecord) {
   return {
     ...clue,
     visibility: clue.visibility as ClueVisibility,
