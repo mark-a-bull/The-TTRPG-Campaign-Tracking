@@ -16,13 +16,13 @@ Implemented so far:
 - **End-of-session summary** — a structured recap (locations visited, GM notes, clues revealed/hidden, battle stats, XP awarded, level changes) computed from the session's event log, shown automatically when a session ends and reopenable anytime from the History Log's "Summary" button. Includes a bulk award panel to give each PC XP and/or a new level in one pass, logged into that session's history even though it's already ended.
 - **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted locally per browser.
 - **Campaign export/import** — export a full campaign (every entity, session history, and uploaded image) to a single `.zip` file for moving between machines or backups; import it back in as a brand-new campaign. No merging/conflict resolution — re-importing an edited copy just creates another campaign.
+- **Public display screen** — a read-only, TV-friendly view at `/display/:campaignId` (no auth — the campaign's own link is the access control, consistent with the rest of the app today) showing the party roster, current session location, party-wide revealed clues (PC-scoped reveals stay private), and battle turn order (no HP/damage numbers). Polls every 5 seconds rather than pushing live updates, since real-time (WebSocket) push isn't built yet.
 
 Not yet built:
 
 - Ruleset/plugin modules (stats are freeform for now)
 - GM/player authentication
 - The player-facing view
-- The public display screen
 - Discord integration
 - Real-time (WebSocket) updates
 
@@ -81,7 +81,7 @@ Builds `shared`, then `server`, then `web` in dependency order.
 The long-term design covers more than what's built today. Roughly in the order these are expected to be tackled next:
 
 - **Ruleset/plugin modules** — the biggest gap between design and code; entities currently have only freeform fields, with no stats, mechanics, or formulas tied to a specific system.
-- **Auth** — GM login and player identities. This blocks the player-facing view, the public display screen, and Discord integration, which all assume auth exists first.
+- **Auth** — GM login and player identities. This blocks the player-facing view and Discord integration, which assume auth exists first (the public display screen shipped without it — see above).
 - **Real-time updates** — WebSocket push so the player view and public screen stay in sync live during a session.
 
 Requested features, not yet designed:

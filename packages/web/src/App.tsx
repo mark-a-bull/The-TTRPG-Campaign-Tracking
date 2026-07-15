@@ -4,9 +4,14 @@ import { BattleConsole } from "./screens/BattleConsole.js";
 import { CampaignDashboard } from "./screens/CampaignDashboard.js";
 import { CampaignHome } from "./screens/CampaignHome.js";
 import { HistoryLog } from "./screens/HistoryLog.js";
+import { PublicDisplay } from "./screens/PublicDisplay.js";
 import { SettingsScreen } from "./screens/SettingsScreen.js";
 
-export default function App() {
+// The public display screen deliberately sits outside SettingsProvider: it's
+// a standalone page (possibly opened on a different device entirely, like a
+// TV browser) with its own fixed dark styling, not part of the GM app shell
+// or its local light/dark theme preference.
+function GmApp() {
   return (
     <SettingsProvider>
       <Routes>
@@ -20,5 +25,14 @@ export default function App() {
         />
       </Routes>
     </SettingsProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/display/:campaignId" element={<PublicDisplay />} />
+      <Route path="/*" element={<GmApp />} />
+    </Routes>
   );
 }

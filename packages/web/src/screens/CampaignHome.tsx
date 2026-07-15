@@ -29,6 +29,11 @@ export function CampaignHome() {
             ← Campaigns
           </Button>
         }
+        trailing={
+          <Button variant="text" onClick={() => window.open(`/display/${campaign.id}`, "_blank")}>
+            Public Display
+          </Button>
+        }
       />
       <SessionBanner campaignId={campaign.id} />
       <Tabs
