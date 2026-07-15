@@ -14,6 +14,7 @@ import { registerMonsterRoutes } from "./routes/monsters.js";
 import { registerMysteryRoutes } from "./routes/mysteries.js";
 import { registerNpcRoutes } from "./routes/npcs.js";
 import { registerPcRoutes } from "./routes/pcs.js";
+import { registerPublicDisplayRoutes } from "./routes/public-display.js";
 import { registerSessionRoutes } from "./routes/sessions.js";
 
 export async function buildApp(options: { logger?: boolean } = {}) {
@@ -42,6 +43,7 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   registerSessionRoutes(app);
   registerBattleRoutes(app);
   registerEntityLinkRoutes(app);
+  registerPublicDisplayRoutes(app);
 
   app.setErrorHandler((error: Error & { statusCode?: number }, _request, reply) => {
     app.log.error(error);
