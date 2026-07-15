@@ -552,13 +552,18 @@ export function registerCampaignTransferRoutes(app: FastifyInstance) {
         return reply.code(400).send({ message: "campaign.json does not match the expected export format" });
       }
 
+      // Create the campaign and all its rows before writing any asset files
+      // to disk. If the transaction fails, nothing has been written yet --
+      // there's nothing to clean up. Writing files first would risk leaving
+      // orphaned, unreferenced files behind on a failed import.
+      const campaign = await importCampaignExport(parsed.data);
+
       await mkdir(ASSETS_DIR, { recursive: true });
       for (const [relPath, entry] of Object.entries(zip.files) as [string, JSZip.JSZipObject][]) {
         if (entry.dir || !relPath.startsWith("assets/")) continue;
         await writeFile(path.join(ASSETS_DIR, path.basename(relPath)), await entry.async("nodebuffer"));
       }
 
-      const campaign = await importCampaignExport(parsed.data);
       return reply.code(201).send(campaign);
     },
   );
