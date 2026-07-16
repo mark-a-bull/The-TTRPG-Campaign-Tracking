@@ -30,6 +30,9 @@ const styles = {
   sidebar: {
     flex: "0 0 280px",
   },
+  battleSidebar: {
+    flex: "0 0 320px",
+  },
   main: {
     flex: 1,
     minWidth: 0,
@@ -166,31 +169,31 @@ export function PublicDisplay() {
               </div>
             </div>
           ) : null}
-
-          {data.session?.battle ? (
-            <div style={styles.section}>
-              <div style={styles.sectionLabel}>Initiative Order</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 480 }}>
-                {data.session.battle.entries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    style={{
-                      padding: "16px 20px",
-                      borderRadius: 12,
-                      fontSize: 24,
-                      fontWeight: entry.isCurrent ? 700 : 400,
-                      background: entry.isCurrent ? "#4a4266" : "#1f2229",
-                      border: entry.isCurrent ? "2px solid #cfbcff" : "2px solid transparent",
-                    }}
-                  >
-                    {entry.label}
-                    {entry.isCurrent ? " — Current Turn" : ""}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
+
+        {data.session?.battle ? (
+          <div style={styles.battleSidebar}>
+            <div style={styles.sectionLabel}>Initiative Order</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {data.session.battle.entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  style={{
+                    padding: "16px 20px",
+                    borderRadius: 12,
+                    fontSize: 24,
+                    fontWeight: entry.isCurrent ? 700 : 400,
+                    background: entry.isCurrent ? "#4a4266" : "#1f2229",
+                    border: entry.isCurrent ? "2px solid #cfbcff" : "2px solid transparent",
+                  }}
+                >
+                  {entry.label}
+                  {entry.isCurrent ? " — Current Turn" : ""}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
