@@ -19,6 +19,23 @@ async function setLocation(request: APIRequestContext, campaignId: string, sessi
   await request.post(`/api/campaigns/${campaignId}/sessions/${sessionId}/location`, { data: { locationId } });
 }
 
+async function createPc(request: APIRequestContext, campaignId: string, name: string) {
+  const res = await request.post(`/api/campaigns/${campaignId}/pcs`, { data: { name } });
+  return (await res.json()) as { id: string };
+}
+
+async function startBattleWithEntries(request: APIRequestContext, campaignId: string, sessionId: string, pcId: string) {
+  const battleRes = await request.post(`/api/campaigns/${campaignId}/sessions/${sessionId}/battles`);
+  const battle = (await battleRes.json()) as { id: string };
+  await request.post(`/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battle.id}/entries`, {
+    data: { kind: "entity", actorType: "pc", actorId: pcId, initiative: 15, maxHp: 20 },
+  });
+  await request.post(`/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battle.id}/entries`, {
+    data: { kind: "adHoc", adHocName: "Goblin Scout", initiative: 5 },
+  });
+  await request.post(`/api/campaigns/${campaignId}/sessions/${sessionId}/battles/${battle.id}/start`);
+}
+
 test.describe("Public Display", () => {
   const createdCampaignIds: string[] = [];
 
@@ -68,5 +85,46 @@ test.describe("Public Display", () => {
     await setLocation(request, campaign.id, session.id, locationB.id);
 
     await expect(page.getByText("Secret Vault")).toBeVisible({ timeout: 8000 });
+  });
+
+  test("lays out the party roster as a left sidebar, left of the main content", async ({ page, request }) => {
+    const campaign = await createCampaign(request);
+    createdCampaignIds.push(campaign.id);
+    await createPc(request, campaign.id, "Kira Stormwind");
+    const location = await createLocation(request, campaign.id, "The Sunken Keep");
+    const session = await startSession(request, campaign.id);
+    await setLocation(request, campaign.id, session.id, location.id);
+
+    await page.goto(`/display/${campaign.id}`);
+    await expect(page.getByText("The Sunken Keep")).toBeVisible();
+
+    const partyLeft = await page.getByText("Party", { exact: true }).evaluate((el) => el.getBoundingClientRect().left);
+    const locationLeft = await page
+      .getByText("Current Location", { exact: true })
+      .evaluate((el) => el.getBoundingClientRect().left);
+
+    expect(partyLeft).toBeLessThan(locationLeft);
+  });
+
+  test("moves Initiative Order to a column on the far right once a battle starts", async ({ page, request }) => {
+    const campaign = await createCampaign(request);
+    createdCampaignIds.push(campaign.id);
+    const pc = await createPc(request, campaign.id, "Kira Stormwind");
+    const location = await createLocation(request, campaign.id, "The Sunken Keep");
+    const session = await startSession(request, campaign.id);
+    await setLocation(request, campaign.id, session.id, location.id);
+    await startBattleWithEntries(request, campaign.id, session.id, pc.id);
+
+    await page.goto(`/display/${campaign.id}`);
+    await expect(page.getByText("Initiative Order")).toBeVisible();
+
+    const locationLeft = await page
+      .getByText("Current Location", { exact: true })
+      .evaluate((el) => el.getBoundingClientRect().left);
+    const initiativeLeft = await page
+      .getByText("Initiative Order", { exact: true })
+      .evaluate((el) => el.getBoundingClientRect().left);
+
+    expect(initiativeLeft).toBeGreaterThan(locationLeft);
   });
 });
