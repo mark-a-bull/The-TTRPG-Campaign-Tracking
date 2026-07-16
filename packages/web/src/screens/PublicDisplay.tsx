@@ -22,6 +22,18 @@ const styles = {
     fontWeight: 700,
     margin: "4px 0 32px",
   },
+  layout: {
+    display: "flex",
+    gap: 48,
+    alignItems: "flex-start" as const,
+  },
+  sidebar: {
+    flex: "0 0 280px",
+  },
+  main: {
+    flex: 1,
+    minWidth: 0,
+  },
   section: {
     marginBottom: 40,
   },
@@ -37,11 +49,24 @@ const styles = {
     flexWrap: "wrap" as const,
     gap: 20,
   },
+  column: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 16,
+  },
   card: {
     background: "#1f2229",
     borderRadius: 16,
     padding: 20,
     minWidth: 200,
+  },
+  rosterCard: {
+    background: "#1f2229",
+    borderRadius: 16,
+    padding: 16,
+    display: "flex",
+    alignItems: "center" as const,
+    gap: 16,
   },
   portrait: {
     width: 120,
@@ -50,6 +75,14 @@ const styles = {
     objectFit: "cover" as const,
     display: "block",
     marginBottom: 12,
+  },
+  rosterPortrait: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    objectFit: "cover" as const,
+    display: "block",
+    flexShrink: 0,
   },
   name: {
     fontSize: 24,
@@ -90,71 +123,75 @@ export function PublicDisplay() {
       <p style={styles.campaignName}>{data.campaignName}</p>
       <h1 style={styles.sessionTitle}>{data.session ? data.session.title || "Session" : "Waiting for the GM…"}</h1>
 
-      {data.session?.currentLocation ? (
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>Current Location</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            {data.session.currentLocation.imageUrl ? (
-              <img
-                src={data.session.currentLocation.imageUrl}
-                alt=""
-                style={{ width: 160, height: 160, borderRadius: 16, objectFit: "cover" }}
-              />
-            ) : null}
-            <div style={{ fontSize: 32, fontWeight: 600 }}>{data.session.currentLocation.name}</div>
+      <div style={styles.layout}>
+        <div style={styles.sidebar}>
+          <div style={styles.sectionLabel}>Party</div>
+          <div style={styles.column}>
+            {data.partyMembers.map((pc) => (
+              <div key={pc.id} style={styles.rosterCard}>
+                {pc.portraitImageUrl ? <img src={pc.portraitImageUrl} alt="" style={styles.rosterPortrait} /> : null}
+                <div style={styles.name}>{pc.name}</div>
+              </div>
+            ))}
           </div>
         </div>
-      ) : null}
 
-      <div style={styles.section}>
-        <div style={styles.sectionLabel}>Party</div>
-        <div style={styles.row}>
-          {data.partyMembers.map((pc) => (
-            <div key={pc.id} style={styles.card}>
-              {pc.portraitImageUrl ? <img src={pc.portraitImageUrl} alt="" style={styles.portrait} /> : null}
-              <div style={styles.name}>{pc.name}</div>
+        <div style={styles.main}>
+          {data.session?.currentLocation ? (
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>Current Location</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                {data.session.currentLocation.imageUrl ? (
+                  <img
+                    src={data.session.currentLocation.imageUrl}
+                    alt=""
+                    style={{ width: 160, height: 160, borderRadius: 16, objectFit: "cover" }}
+                  />
+                ) : null}
+                <div style={{ fontSize: 32, fontWeight: 600 }}>{data.session.currentLocation.name}</div>
+              </div>
             </div>
-          ))}
+          ) : null}
+
+          {data.session && data.session.revealedClues.length > 0 ? (
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>Known Clues</div>
+              <div style={styles.row}>
+                {data.session.revealedClues.map((clue) => (
+                  <div key={clue.id} style={{ ...styles.card, maxWidth: 320 }}>
+                    <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{clue.title}</div>
+                    {clue.content ? <div style={{ fontSize: 16, color: "#c8ccd4" }}>{clue.content}</div> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {data.session?.battle ? (
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>Initiative Order</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 480 }}>
+                {data.session.battle.entries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    style={{
+                      padding: "16px 20px",
+                      borderRadius: 12,
+                      fontSize: 24,
+                      fontWeight: entry.isCurrent ? 700 : 400,
+                      background: entry.isCurrent ? "#4a4266" : "#1f2229",
+                      border: entry.isCurrent ? "2px solid #cfbcff" : "2px solid transparent",
+                    }}
+                  >
+                    {entry.label}
+                    {entry.isCurrent ? " — Current Turn" : ""}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
-
-      {data.session && data.session.revealedClues.length > 0 ? (
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>Known Clues</div>
-          <div style={styles.row}>
-            {data.session.revealedClues.map((clue) => (
-              <div key={clue.id} style={{ ...styles.card, maxWidth: 320 }}>
-                <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{clue.title}</div>
-                {clue.content ? <div style={{ fontSize: 16, color: "#c8ccd4" }}>{clue.content}</div> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {data.session?.battle ? (
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>Initiative Order</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 480 }}>
-            {data.session.battle.entries.map((entry) => (
-              <div
-                key={entry.id}
-                style={{
-                  padding: "16px 20px",
-                  borderRadius: 12,
-                  fontSize: 24,
-                  fontWeight: entry.isCurrent ? 700 : 400,
-                  background: entry.isCurrent ? "#4a4266" : "#1f2229",
-                  border: entry.isCurrent ? "2px solid #cfbcff" : "2px solid transparent",
-                }}
-              >
-                {entry.label}
-                {entry.isCurrent ? " — Current Turn" : ""}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
