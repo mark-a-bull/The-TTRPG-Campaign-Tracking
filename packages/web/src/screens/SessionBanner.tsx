@@ -38,6 +38,7 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [summarySessionId, setSummarySessionId] = useState<string | null>(null);
+  const [previousSessionRecapId, setPreviousSessionRecapId] = useState<string | null>(null);
 
   const startSession = useStartSession(campaignId);
   const endSession = useEndSession(campaignId);
@@ -67,12 +68,25 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
           </div>
           <Button
             disabled={startSession.isPending}
-            onClick={() =>
+            onClick={() => {
+              // sessions is ordered startedAt desc, so [0] is the campaign's
+              // most recent session -- which must already be "ended" here
+              // (only one session can ever be active, and this branch only
+              // renders when none is). Captured before the mutation, since
+              // sessions refetches afterward and [0] would then be the new
+              // session instead.
+              const previousSessionId = sessions?.[0]?.id ?? null;
               startSession.mutate(
                 { title: newTitle },
-                { onSuccess: () => setNewTitle(""), onError: (err) => setError(errorMessage(err)) },
-              )
-            }
+                {
+                  onSuccess: () => {
+                    setNewTitle("");
+                    if (previousSessionId) setPreviousSessionRecapId(previousSessionId);
+                  },
+                  onError: (err) => setError(errorMessage(err)),
+                },
+              );
+            }}
           >
             Start Session
           </Button>
@@ -182,6 +196,12 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
         sessionId={summarySessionId}
         onClose={() => setSummarySessionId(null)}
         allowAwards
+      />
+      <SessionSummaryDialog
+        campaignId={campaignId}
+        sessionId={previousSessionRecapId}
+        onClose={() => setPreviousSessionRecapId(null)}
+        headlinePrefix="Last Time: "
       />
     </div>
   );
