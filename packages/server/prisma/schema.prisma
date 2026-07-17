@@ -79,16 +79,19 @@ model Monster {
 }
 
 model Location {
-  id          String   @id @default(uuid())
-  campaignId  String
-  name        String
-  imageUrl    String?
-  description String   @default("")
-  notes       String   @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(uuid())
+  campaignId       String
+  parentLocationId String?
+  name             String
+  imageUrl         String?
+  description      String   @default("")
+  notes            String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign       Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parentLocation Location?  @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
+  childLocations Location[] @relation("LocationHierarchy")
 
   @@map("locations")
 }

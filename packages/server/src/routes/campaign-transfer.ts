@@ -259,9 +259,32 @@ async function importCampaignExport(data: CampaignExport) {
   operations.push(
     prisma.monster.createMany({ data: remapFlatEntities(data.monsters, ctx.monsterIdMap, newCampaignId) }),
   );
-  operations.push(
-    prisma.location.createMany({ data: remapFlatEntities(data.locations, ctx.locationIdMap, newCampaignId) }),
-  );
+  // Locations reference their own parent, so this can't be a single flat
+  // createMany like the others: remapFlatEntities only rewrites the row's
+  // own id, and the stale exported parentLocationId would point at a
+  // foreign/nonexistent id post-import. First pass creates every location
+  // with parentLocationId forced null (still populating ctx.locationIdMap
+  // as a side effect); second pass resolves each original parentLocationId
+  // through that now-complete map and sets it via an individual update --
+  // can't be folded into the createMany since none of the new ids exist
+  // until that operation actually runs.
+  const locationRows = remapFlatEntities(data.locations, ctx.locationIdMap, newCampaignId).map((row) => ({
+    ...row,
+    parentLocationId: null,
+  }));
+  operations.push(prisma.location.createMany({ data: locationRows }));
+  for (const location of data.locations) {
+    if (!location.parentLocationId) continue;
+    const newParentId = ctx.locationIdMap.get(location.parentLocationId);
+    if (!newParentId) continue; // defensive: parent wasn't part of this export
+    operations.push(
+      prisma.location.update({
+        where: { id: ctx.locationIdMap.get(location.id)! },
+        data: { parentLocationId: newParentId },
+      }),
+    );
+  }
+
   operations.push(
     prisma.mystery.createMany({ data: remapFlatEntities(data.mysteries, ctx.mysteryIdMap, newCampaignId) }),
   );

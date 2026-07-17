@@ -2,6 +2,7 @@ import { z } from "zod";
 import { idSchema, nullableImageUrl, timestampFields } from "./common.js";
 
 export const locationCreateSchema = z.object({
+  parentLocationId: idSchema.nullable().default(null),
   name: z.string().min(1).max(200),
   imageUrl: nullableImageUrl,
   description: z.string().max(5000).default(""),

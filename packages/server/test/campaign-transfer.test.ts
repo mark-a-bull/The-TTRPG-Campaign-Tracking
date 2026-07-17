@@ -18,6 +18,7 @@ describe("campaign export/import", () => {
   let campaignId: string;
   let pcId: string;
   let locationId: string;
+  let childLocationId: string;
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
@@ -43,6 +44,13 @@ describe("campaign export/import", () => {
       payload: { name: "The Sunken Keep" },
     });
     locationId = locationRes.json().id;
+
+    const childLocationRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/locations`,
+      payload: { name: "Basement", parentLocationId: locationId },
+    });
+    childLocationId = childLocationRes.json().id;
 
     const mysteryRes = await app.inject({
       method: "POST",
@@ -158,7 +166,7 @@ describe("campaign export/import", () => {
     expect(manifest.pcs).toHaveLength(1);
     expect(manifest.npcs).toHaveLength(1);
     expect(manifest.monsters).toHaveLength(1);
-    expect(manifest.locations).toHaveLength(1);
+    expect(manifest.locations).toHaveLength(2);
     expect(manifest.mysteries).toHaveLength(1);
     expect(manifest.clues).toHaveLength(1);
     expect(manifest.entityLinks).toHaveLength(1);
@@ -195,20 +203,28 @@ describe("campaign export/import", () => {
       expect(newPcs[0].id).not.toBe(pcId);
       expect(newPcs[0].name).toBe("Kira Stormwind");
 
-      expect(newLocations).toHaveLength(1);
-      expect(newLocations[0].id).not.toBe(locationId);
+      expect(newLocations).toHaveLength(2);
+      const newParentLocation = newLocations.find((location: { name: string }) => location.name === "The Sunken Keep");
+      const newChildLocation = newLocations.find((location: { name: string }) => location.name === "Basement");
+      expect(newParentLocation.id).not.toBe(locationId);
+      expect(newChildLocation.id).not.toBe(childLocationId);
+      // The child's parentLocationId must resolve to the parent's *new* id,
+      // not the stale original id from the export -- this is the two-pass
+      // import fix (createMany with null, then a second-pass update).
+      expect(newChildLocation.parentLocationId).toBe(newParentLocation.id);
+      expect(newParentLocation.parentLocationId).toBeNull();
 
       // The entity link must point at the *new* pc/location ids, not the originals.
       expect(newLinks).toHaveLength(1);
       expect(newLinks[0].fromId).toBe(newPcs[0].id);
-      expect(newLinks[0].toId).toBe(newLocations[0].id);
+      expect(newLinks[0].toId).toBe(newParentLocation.id);
 
       // Clue.visibleTo must resolve to the new PC id.
       expect(newClues[0].visibleTo).toEqual([newPcs[0].id]);
 
       // Session.currentLocationId must resolve to the new location id.
       expect(newSessions).toHaveLength(1);
-      expect(newSessions[0].currentLocationId).toBe(newLocations[0].id);
+      expect(newSessions[0].currentLocationId).toBe(newParentLocation.id);
 
       const eventsRes = await app.inject({
         method: "GET",
