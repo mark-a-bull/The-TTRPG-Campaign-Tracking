@@ -88,7 +88,7 @@ Requested features, not yet designed:
 
 - **Custom calendar** ([#3](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/3)) — track in-world dates and events on a GM-configurable calendar.
 - **Sub-locations** ([#10](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/10)) — nest a Location under a parent (e.g. floors or rooms within a larger building) so a specific area can get its own focus.
-- **Text/SMS notifications** ([#15](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/15)) — an alternative to Discord integration for sending information to players.
+- **Player messages via shareable link** ([#15](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/15)) — GM-composed messages to players, delivered through a no-auth link (like the public display screen) rather than real SMS, which would require a paid third-party API.
 - **Organizations entity type** ([#19](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/19)) — a new core entity for groups that serve a shared purpose (a business, religion, gang, government, or the PCs' own party), with the same relationships, images, and notes support as other entities.
 - **Focus switching between groups/PCs** ([#5](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/5)) — select which location or group is currently in focus during a session and track that over time.
 - **Session start meta details** ([#11](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/11)) — record who's attending and where a session takes place (in person, online, etc.) when starting it.
