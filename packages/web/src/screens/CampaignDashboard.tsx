@@ -243,7 +243,7 @@ export function CampaignDashboard() {
         }
       >
         {deleteError ? <ErrorBanner message={deleteError} onDismiss={() => setDeleteError(null)} /> : null}
-        <p>This can't be undone. All entities, sessions, and history in this campaign will be deleted too.</p>
+        <p>This can&apos;t be undone. All entities, sessions, and history in this campaign will be deleted too.</p>
       </Dialog>
     </div>
   );

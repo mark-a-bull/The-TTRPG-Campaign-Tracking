@@ -21,6 +21,7 @@ pnpm --filter @ttrpg/server exec prisma migrate deploy # apply DB migrations
 pnpm dev                                               # run server (3001) + web (5173) together
 pnpm build                                             # builds shared -> server -> web, in that order
 pnpm test                                              # server integration tests (Vitest) — the root "test" script only covers @ttrpg/server
+pnpm lint                                              # ESLint across the whole workspace
 ```
 
 Web has its own Playwright e2e suite, run separately:
@@ -43,7 +44,7 @@ Prisma schema changes need a migration: `pnpm --filter @ttrpg/server exec prisma
 
 ## Merge policy
 
-No change is ready to merge until `pnpm test` **and** `pnpm build` both pass in full. Run both before opening a PR, not just before committing — a change can pass in isolation but break an unrelated test or type (e.g. an API response shape change breaking an older test that assumed the old shape). `pnpm test` runs Vitest, which does not typecheck via `tsc` — a real compile error can sit unnoticed on `main` indefinitely if only `pnpm test` is checked, since nothing in the merge workflow otherwise runs a full build. If either fails, fix it as part of the same change before the PR is opened; don't merge with a known-broken suite or build and fix it later.
+No change is ready to merge until `pnpm test`, `pnpm build`, **and** `pnpm lint` all pass in full. Run all three before opening a PR, not just before committing — a change can pass in isolation but break an unrelated test or type (e.g. an API response shape change breaking an older test that assumed the old shape). `pnpm test` runs Vitest, which does not typecheck via `tsc` — a real compile error can sit unnoticed on `main` indefinitely if only `pnpm test` is checked, since nothing in the merge workflow otherwise runs a full build. If any fail, fix it as part of the same change before the PR is opened; don't merge with a known-broken suite, build, or lint and fix it later.
 
 ## Architecture
 

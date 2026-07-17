@@ -224,7 +224,7 @@ export function EntityList({ campaignId, entityType }: EntityListProps) {
         }
       >
         {deleteError ? <ErrorBanner message={deleteError} onDismiss={() => setDeleteError(null)} /> : null}
-        <p>This can't be undone.</p>
+        <p>This can&apos;t be undone.</p>
       </Dialog>
     </div>
   );
