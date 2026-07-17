@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { Location } from "@ttrpg/shared";
 import { locationHooks } from "../api/entities.js";
 import { useBattles, useCreateBattle } from "../api/battles.js";
 import { useAddGmNote, useEndSession, useSessions, useSetSessionLocation, useStartSession } from "../api/sessions.js";
@@ -10,6 +11,21 @@ import { SessionSummaryDialog } from "./SessionSummaryDialog.js";
 
 interface SessionBannerProps {
   campaignId: string;
+}
+
+/** "Sunken Keep > Basement > Treasury" -- GM-facing only, walking up through
+ * parentLocationId over an already-fetched flat locations list. */
+function buildLocationBreadcrumb(locations: Location[], locationId: string): string {
+  const byId = new Map(locations.map((location) => [location.id, location]));
+  const names: string[] = [];
+  let currentId: string | null = locationId;
+  while (currentId) {
+    const current = byId.get(currentId);
+    if (!current) break;
+    names.unshift(current.name);
+    currentId = current.parentLocationId;
+  }
+  return names.join(" > ");
 }
 
 export function SessionBanner({ campaignId }: SessionBannerProps) {
@@ -31,8 +47,10 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
   const { data: battles } = useBattles(campaignId, activeSessionId || undefined);
   const createBattle = useCreateBattle(campaignId, activeSessionId);
 
-  const currentLocationName = locations?.find((location) => location.id === activeSession?.currentLocationId)
-    ?.name;
+  const currentLocationName =
+    locations && activeSession?.currentLocationId
+      ? buildLocationBreadcrumb(locations, activeSession.currentLocationId)
+      : undefined;
   const openBattle = battles?.find((battle) => battle.status !== "resolved");
 
   if (!activeSession) {
@@ -137,7 +155,7 @@ export function SessionBanner({ campaignId }: SessionBannerProps) {
             </option>
             {locations.map((location) => (
               <option key={location.id} value={location.id}>
-                {location.name}
+                {buildLocationBreadcrumb(locations, location.id)}
               </option>
             ))}
           </select>

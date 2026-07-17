@@ -14,6 +14,27 @@ import { errorResponseSchema } from "../error-response.js";
 import { prisma } from "../prisma.js";
 import { appendSessionEvent, serializeSessionEvent } from "../session-events.js";
 
+/** Builds "Sunken Keep > Basement > Treasury" for a location, walking up
+ * through parentLocationId. History log events snapshot this full breadcrumb
+ * at logging time (not just the leaf name) since event payloads are already
+ * point-in-time snapshots, same as everywhere else in the history log. */
+async function buildLocationBreadcrumb(campaignId: string, locationId: string): Promise<string> {
+  const locations = await prisma.location.findMany({
+    where: { campaignId },
+    select: { id: true, name: true, parentLocationId: true },
+  });
+  const byId = new Map(locations.map((location) => [location.id, location]));
+  const names: string[] = [];
+  let currentId: string | null = locationId;
+  while (currentId) {
+    const current = byId.get(currentId);
+    if (!current) break;
+    names.unshift(current.name);
+    currentId = current.parentLocationId;
+  }
+  return names.join(" > ");
+}
+
 // `status` is a plain `string` in Prisma (SQLite has no native enum); the cast
 // narrows to the literal union the Zod response schema expects. Runtime values
 // are always one of the literals since they're only ever written as literals.
@@ -247,8 +268,9 @@ export function registerSessionRoutes(app: FastifyInstance) {
         where: { id },
         data: { currentLocationId: location.id },
       });
+      const breadcrumb = await buildLocationBreadcrumb(campaignId, location.id);
       await appendSessionEvent(id, campaignId, "LOCATION_CHANGED", {
-        payload: { locationId: location.id, locationName: location.name },
+        payload: { locationId: location.id, locationName: breadcrumb },
       });
       return serializeSession(updated);
     },

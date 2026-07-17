@@ -79,6 +79,48 @@ describe("session lifecycle", () => {
     expect(eventTypes).toEqual(["SESSION_STARTED", "LOCATION_CHANGED", "GM_NOTE", "SESSION_ENDED"]);
   });
 
+  it("logs the full location breadcrumb, not just the leaf name, when setting a nested location", async () => {
+    const keepRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/locations`,
+      payload: { name: "The Sunken Keep" },
+    });
+    const basementRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/locations`,
+      payload: { name: "Basement", parentLocationId: keepRes.json().id },
+    });
+    const treasuryRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/locations`,
+      payload: { name: "Treasury", parentLocationId: basementRes.json().id },
+    });
+
+    const startRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/sessions`,
+      payload: { title: "Breadcrumb Session" },
+    });
+    const session = startRes.json();
+
+    await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/sessions/${session.id}/location`,
+      payload: { locationId: treasuryRes.json().id },
+    });
+
+    const eventsRes = await app.inject({
+      method: "GET",
+      url: `/api/campaigns/${campaignId}/sessions/${session.id}/events`,
+    });
+    const locationChangedEvent = eventsRes
+      .json()
+      .events.find((event: { type: string }) => event.type === "LOCATION_CHANGED");
+    expect(locationChangedEvent.payload.locationName).toBe("The Sunken Keep > Basement > Treasury");
+
+    await app.inject({ method: "POST", url: `/api/campaigns/${campaignId}/sessions/${session.id}/end` });
+  });
+
   it("defaults an untitled session's title to the current date and time", async () => {
     const startRes = await app.inject({
       method: "POST",

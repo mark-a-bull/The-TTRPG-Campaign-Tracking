@@ -10,11 +10,16 @@ import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
 import { ClueRevealSection } from "./ClueRevealSection.js";
 import { EntityLinksSection } from "./EntityLinksSection.js";
+import { LocationParentField } from "./LocationParentField.js";
 import { XpAwardSection } from "./XpAwardSection.js";
 import type { PC } from "@ttrpg/shared";
 
 interface EntityFormProps {
   entityType: EntityType;
+  /** Only required for entity types with campaign-scoped pickers (currently
+   * just "locations", for its parent-location field) -- not read from
+   * initialValues since that's undefined on create. */
+  campaignId?: string;
   initialValues?: Record<string, unknown>;
   onSubmit: (data: Record<string, unknown>) => void;
   onCancel: () => void;
@@ -42,6 +47,7 @@ function ReadOnlyField({ field, value }: { field: FieldConfig; value: unknown })
 
 export function EntityForm({
   entityType,
+  campaignId,
   initialValues,
   onSubmit,
   onCancel,
@@ -151,6 +157,16 @@ export function EntityForm({
           />
         );
       })}
+
+      {entityType === "locations" && campaignId ? (
+        <LocationParentField
+          campaignId={campaignId}
+          currentId={initialValues?.id as string | undefined}
+          value={(watch("parentLocationId") as string | null) ?? null}
+          onChange={(value) => setValue("parentLocationId", value, { shouldDirty: true })}
+          readOnly={readOnly}
+        />
+      ) : null}
 
       {initialValues && entityType === "pcs" ? (
         <XpAwardSection campaignId={initialValues.campaignId as string} pc={initialValues as unknown as PC} readOnly={readOnly} />
