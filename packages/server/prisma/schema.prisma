@@ -245,3 +245,21 @@ model EntityLink {
 
   @@map("entity_links")
 }
+
+/// Global, not campaign-scoped -- the app has no multi-user concept yet, so
+/// there is exactly one settings row (id fixed at "singleton"), read/created
+/// via upsert so a row always exists without a separate seed step.
+model Settings {
+  id               String   @id @default("singleton")
+  darkMode         Boolean  @default(false)
+  primary          String   @default("#6750a4")
+  surface          String   @default("#fffbfe")
+  onSurface        String   @default("#1c1b1f")
+  background       String   @default("#fffbfe")
+  onBackground     String   @default("#1c1b1f")
+  surfaceVariant   String   @default("#e7e0ec")
+  onSurfaceVariant String   @default("#49454f")
+  updatedAt        DateTime @updatedAt
+
+  @@map("settings")
+}

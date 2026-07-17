@@ -16,6 +16,7 @@ import { registerNpcRoutes } from "./routes/npcs.js";
 import { registerPcRoutes } from "./routes/pcs.js";
 import { registerPublicDisplayRoutes } from "./routes/public-display.js";
 import { registerSessionRoutes } from "./routes/sessions.js";
+import { registerSettingsRoutes } from "./routes/settings.js";
 
 export async function buildApp(options: { logger?: boolean } = {}) {
   const app = Fastify({ logger: options.logger ?? true }).withTypeProvider<ZodTypeProvider>();
@@ -44,6 +45,7 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   registerBattleRoutes(app);
   registerEntityLinkRoutes(app);
   registerPublicDisplayRoutes(app);
+  registerSettingsRoutes(app);
 
   app.setErrorHandler((error: Error & { statusCode?: number }, _request, reply) => {
     app.log.error(error);
