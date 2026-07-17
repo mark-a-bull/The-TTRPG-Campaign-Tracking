@@ -9,6 +9,8 @@ interface SessionSummaryDialogProps {
   onClose: () => void;
   /** Only true right after clicking "End Session" -- reopening the summary later (e.g. from the History Log) is read-only. */
   allowAwards?: boolean;
+  /** e.g. "Last Time: " for the previous-session recap shown on Start Session, distinguishing it from the end-of-session/reopened cases at a glance. */
+  headlinePrefix?: string;
 }
 
 function Section({ label, items }: { label: string; items: string[] }) {
@@ -27,14 +29,20 @@ function Section({ label, items }: { label: string; items: string[] }) {
   );
 }
 
-export function SessionSummaryDialog({ campaignId, sessionId, onClose, allowAwards }: SessionSummaryDialogProps) {
+export function SessionSummaryDialog({
+  campaignId,
+  sessionId,
+  onClose,
+  allowAwards,
+  headlinePrefix,
+}: SessionSummaryDialogProps) {
   const { data: summary, isLoading } = useSessionSummary(campaignId, sessionId ?? undefined);
 
   return (
     <Dialog
       open={sessionId !== null}
       onClose={onClose}
-      headline={summary ? `${summary.title || "Session"} — Summary` : "Session Summary"}
+      headline={summary ? `${headlinePrefix ?? ""}${summary.title || "Session"} — Summary` : "Session Summary"}
       actions={
         <Button variant="text" onClick={onClose}>
           Close
