@@ -28,9 +28,14 @@ model Campaign {
   @@map("campaigns")
 }
 
+/// playerId: soft reference to Player.id, no DB-level FK (same polymorphic-
+/// reference tradeoff as EntityLink's fromId/toId) -- a deleted Player leaves
+/// this dangling, resolved to "Unknown" at the UI layer rather than
+/// cascading or being blocked.
 model Pc {
   id                String   @id @default(uuid())
   campaignId        String
+  playerId          String?
   name              String
   portraitImageUrl  String?
   roleOrClass       String   @default("")
@@ -45,6 +50,19 @@ model Pc {
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@map("pcs")
+}
+
+/// Root-level -- not scoped to a Campaign, since the same person can play
+/// across multiple campaigns. See Campaign for the other root-level model.
+model Player {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @default("")
+  email     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("players")
 }
 
 model Npc {

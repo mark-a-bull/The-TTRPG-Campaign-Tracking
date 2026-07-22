@@ -15,6 +15,7 @@ import { registerMysteryRoutes } from "./routes/mysteries.js";
 import { registerNpcRoutes } from "./routes/npcs.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerPcRoutes } from "./routes/pcs.js";
+import { registerPlayerRoutes } from "./routes/players.js";
 import { registerPublicDisplayRoutes } from "./routes/public-display.js";
 import { registerSessionRoutes } from "./routes/sessions.js";
 import { registerSettingsRoutes } from "./routes/settings.js";
@@ -36,6 +37,7 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   registerCampaignRoutes(app);
   registerCampaignTransferRoutes(app);
   registerAssetRoutes(app);
+  registerPlayerRoutes(app);
   registerPcRoutes(app);
   registerNpcRoutes(app);
   registerMonsterRoutes(app);
