@@ -13,6 +13,7 @@ import { registerLocationRoutes } from "./routes/locations.js";
 import { registerMonsterRoutes } from "./routes/monsters.js";
 import { registerMysteryRoutes } from "./routes/mysteries.js";
 import { registerNpcRoutes } from "./routes/npcs.js";
+import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerPcRoutes } from "./routes/pcs.js";
 import { registerPublicDisplayRoutes } from "./routes/public-display.js";
 import { registerSessionRoutes } from "./routes/sessions.js";
@@ -40,6 +41,7 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   registerMonsterRoutes(app);
   registerLocationRoutes(app);
   registerMysteryRoutes(app);
+  registerOrganizationRoutes(app);
   registerClueRoutes(app);
   registerSessionRoutes(app);
   registerBattleRoutes(app);

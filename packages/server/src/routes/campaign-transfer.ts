@@ -48,26 +48,28 @@ async function buildCampaignExport(campaignId: string): Promise<CampaignExport |
   const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
   if (!campaign) return null;
 
-  const [pcs, npcs, monsters, locations, mysteries, clues, sessions, entityLinks] = await Promise.all([
-    prisma.pc.findMany({ where: { campaignId } }),
-    prisma.npc.findMany({ where: { campaignId } }),
-    prisma.monster.findMany({ where: { campaignId } }),
-    prisma.location.findMany({ where: { campaignId } }),
-    prisma.mystery.findMany({ where: { campaignId } }),
-    prisma.clue.findMany({ where: { campaignId } }),
-    prisma.session.findMany({
-      where: { campaignId },
-      orderBy: { startedAt: "asc" },
-      include: {
-        events: { orderBy: { createdAt: "asc" } },
-        battles: {
-          orderBy: { createdAt: "asc" },
-          include: { entries: { orderBy: { order: "asc" }, include: { statuses: true } } },
+  const [pcs, npcs, monsters, locations, mysteries, clues, organizations, sessions, entityLinks] =
+    await Promise.all([
+      prisma.pc.findMany({ where: { campaignId } }),
+      prisma.npc.findMany({ where: { campaignId } }),
+      prisma.monster.findMany({ where: { campaignId } }),
+      prisma.location.findMany({ where: { campaignId } }),
+      prisma.mystery.findMany({ where: { campaignId } }),
+      prisma.clue.findMany({ where: { campaignId } }),
+      prisma.organization.findMany({ where: { campaignId } }),
+      prisma.session.findMany({
+        where: { campaignId },
+        orderBy: { startedAt: "asc" },
+        include: {
+          events: { orderBy: { createdAt: "asc" } },
+          battles: {
+            orderBy: { createdAt: "asc" },
+            include: { entries: { orderBy: { order: "asc" }, include: { statuses: true } } },
+          },
         },
-      },
-    }),
-    prisma.entityLink.findMany({ where: { campaignId } }),
-  ]);
+      }),
+      prisma.entityLink.findMany({ where: { campaignId } }),
+    ]);
 
   return {
     formatVersion: 1,
@@ -89,6 +91,7 @@ async function buildCampaignExport(campaignId: string): Promise<CampaignExport |
       status: mystery.status as CampaignExport["mysteries"][number]["status"],
     })),
     clues: clues.map((clue) => withoutCampaignId(serializeClue(clue))),
+    organizations: organizations.map((organization) => withoutCampaignId(serializeTimestamps(organization))),
     sessions: sessions.map((session) => {
       const serialized = serializeSession(session);
       return {
@@ -147,6 +150,7 @@ function collectAssetPaths(data: CampaignExport): string[] {
   for (const npc of data.npcs) add(npc.portraitImageUrl);
   for (const monster of data.monsters) add(monster.portraitImageUrl);
   for (const location of data.locations) add(location.imageUrl);
+  for (const organization of data.organizations) add(organization.imageUrl);
   return [...paths];
 }
 
@@ -159,6 +163,7 @@ interface ImportContext {
   locationIdMap: Map<string, string>;
   mysteryIdMap: Map<string, string>;
   clueIdMap: Map<string, string>;
+  organizationIdMap: Map<string, string>;
   entryIdMap: Map<string, string>;
 }
 
@@ -176,6 +181,8 @@ function idMapFor(ctx: ImportContext, type: EntityType): Map<string, string> {
       return ctx.mysteryIdMap;
     case "clues":
       return ctx.clueIdMap;
+    case "organizations":
+      return ctx.organizationIdMap;
   }
 }
 
@@ -232,6 +239,7 @@ async function importCampaignExport(data: CampaignExport) {
     locationIdMap: new Map(),
     mysteryIdMap: new Map(),
     clueIdMap: new Map(),
+    organizationIdMap: new Map(),
     entryIdMap: new Map(),
   };
 
@@ -287,6 +295,11 @@ async function importCampaignExport(data: CampaignExport) {
 
   operations.push(
     prisma.mystery.createMany({ data: remapFlatEntities(data.mysteries, ctx.mysteryIdMap, newCampaignId) }),
+  );
+  operations.push(
+    prisma.organization.createMany({
+      data: remapFlatEntities(data.organizations, ctx.organizationIdMap, newCampaignId),
+    }),
   );
 
   for (const clue of data.clues) {

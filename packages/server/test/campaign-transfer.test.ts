@@ -19,6 +19,7 @@ describe("campaign export/import", () => {
   let pcId: string;
   let locationId: string;
   let childLocationId: string;
+  let organizationId: string;
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
@@ -77,10 +78,28 @@ describe("campaign export/import", () => {
       payload: { name: "Goblin Scout" },
     });
 
+    const organizationRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/organizations`,
+      payload: { name: "The Dockside Guild" },
+    });
+    organizationId = organizationRes.json().id;
+
     await app.inject({
       method: "POST",
       url: `/api/campaigns/${campaignId}/links`,
       payload: { fromType: "pcs", fromId: pcId, toType: "locations", toId: locationId, label: "home town" },
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/links`,
+      payload: {
+        fromType: "pcs",
+        fromId: pcId,
+        toType: "organizations",
+        toId: organizationId,
+        label: "member of",
+      },
     });
 
     const sessionRes = await app.inject({
@@ -169,7 +188,8 @@ describe("campaign export/import", () => {
     expect(manifest.locations).toHaveLength(2);
     expect(manifest.mysteries).toHaveLength(1);
     expect(manifest.clues).toHaveLength(1);
-    expect(manifest.entityLinks).toHaveLength(1);
+    expect(manifest.organizations).toHaveLength(1);
+    expect(manifest.entityLinks).toHaveLength(2);
     expect(manifest.sessions).toHaveLength(1);
     expect(manifest.sessions[0].events.length).toBeGreaterThan(0);
     expect(manifest.sessions[0].battles).toHaveLength(1);
@@ -191,12 +211,13 @@ describe("campaign export/import", () => {
       expect(newCampaign.id).not.toBe(campaignId);
       expect(newCampaign.name).toBe("Transfer Test Campaign");
 
-      const [newPcs, newLocations, newLinks, newClues, newSessions] = await Promise.all([
+      const [newPcs, newLocations, newLinks, newClues, newSessions, newOrganizations] = await Promise.all([
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/pcs` }).then((r) => r.json()),
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/locations` }).then((r) => r.json()),
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/links` }).then((r) => r.json()),
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/clues` }).then((r) => r.json()),
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/sessions` }).then((r) => r.json()),
+        app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/organizations` }).then((r) => r.json()),
       ]);
 
       expect(newPcs).toHaveLength(1);
@@ -214,10 +235,18 @@ describe("campaign export/import", () => {
       expect(newChildLocation.parentLocationId).toBe(newParentLocation.id);
       expect(newParentLocation.parentLocationId).toBeNull();
 
-      // The entity link must point at the *new* pc/location ids, not the originals.
-      expect(newLinks).toHaveLength(1);
-      expect(newLinks[0].fromId).toBe(newPcs[0].id);
-      expect(newLinks[0].toId).toBe(newParentLocation.id);
+      expect(newOrganizations).toHaveLength(1);
+      expect(newOrganizations[0].id).not.toBe(organizationId);
+      expect(newOrganizations[0].name).toBe("The Dockside Guild");
+
+      // The entity links must point at the *new* ids, not the originals.
+      expect(newLinks).toHaveLength(2);
+      const locationLink = newLinks.find((link: { toType: string }) => link.toType === "locations");
+      const organizationLink = newLinks.find((link: { toType: string }) => link.toType === "organizations");
+      expect(locationLink.fromId).toBe(newPcs[0].id);
+      expect(locationLink.toId).toBe(newParentLocation.id);
+      expect(organizationLink.fromId).toBe(newPcs[0].id);
+      expect(organizationLink.toId).toBe(newOrganizations[0].id);
 
       // Clue.visibleTo must resolve to the new PC id.
       expect(newClues[0].visibleTo).toEqual([newPcs[0].id]);

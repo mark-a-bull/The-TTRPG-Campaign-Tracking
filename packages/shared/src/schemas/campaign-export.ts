@@ -7,6 +7,7 @@ import { locationSchema } from "./location.js";
 import { monsterSchema } from "./monster.js";
 import { mysterySchema } from "./mystery.js";
 import { npcSchema } from "./npc.js";
+import { organizationSchema } from "./organization.js";
 import { pcSchema } from "./pc.js";
 import { sessionEventSchema, sessionSchema } from "./session.js";
 
@@ -29,6 +30,7 @@ export const campaignExportSchema = z.object({
   locations: z.array(locationSchema.omit({ campaignId: true })),
   mysteries: z.array(mysterySchema.omit({ campaignId: true })),
   clues: z.array(clueSchema.omit({ campaignId: true })),
+  organizations: z.array(organizationSchema.omit({ campaignId: true })),
   sessions: z.array(sessionExportSchema),
   entityLinks: z.array(entityLinkSchema.omit({ campaignId: true })),
 });
