@@ -16,6 +16,9 @@ import type {
   NPC,
   NPCCreate,
   NPCUpdate,
+  Organization,
+  OrganizationCreate,
+  OrganizationUpdate,
   PC,
   PCCreate,
   PCUpdate,
@@ -75,6 +78,9 @@ export const monsterHooks = createEntityHooks<Monster, MonsterCreate, MonsterUpd
 export const locationHooks = createEntityHooks<Location, LocationCreate, LocationUpdate>("locations");
 export const mysteryHooks = createEntityHooks<Mystery, MysteryCreate, MysteryUpdate>("mysteries");
 export const clueHooks = createEntityHooks<Clue, ClueCreate, ClueUpdate>("clues");
+export const organizationHooks = createEntityHooks<Organization, OrganizationCreate, OrganizationUpdate>(
+  "organizations",
+);
 
 /** A record shape wide enough for the generic (type-erased) entity list view. */
 export interface MinimalEntityRecord {
@@ -98,4 +104,5 @@ export const entityHooksByType: Record<EntityType, GenericEntityHooks> = {
   locations: locationHooks as unknown as GenericEntityHooks,
   mysteries: mysteryHooks as unknown as GenericEntityHooks,
   clues: clueHooks as unknown as GenericEntityHooks,
+  organizations: organizationHooks as unknown as GenericEntityHooks,
 };

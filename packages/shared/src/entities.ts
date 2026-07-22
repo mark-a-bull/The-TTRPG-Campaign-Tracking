@@ -5,6 +5,7 @@ export const entityTypes = [
   "locations",
   "mysteries",
   "clues",
+  "organizations",
 ] as const;
 
 export type EntityType = (typeof entityTypes)[number];
@@ -35,4 +36,10 @@ export const entityTypeConfig: Record<EntityType, EntityTypeConfig> = {
   locations: { label: "Location", pluralLabel: "Locations", imageField: "imageUrl", titleField: "name" },
   mysteries: { label: "Mystery", pluralLabel: "Mysteries", imageField: null, titleField: "name" },
   clues: { label: "Clue", pluralLabel: "Clues", imageField: null, titleField: "title" },
+  organizations: {
+    label: "Organization",
+    pluralLabel: "Organizations",
+    imageField: "imageUrl",
+    titleField: "name",
+  },
 };

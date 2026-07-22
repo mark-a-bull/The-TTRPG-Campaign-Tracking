@@ -5,6 +5,7 @@ import {
   monsterCreateSchema,
   mysteryCreateSchema,
   npcCreateSchema,
+  organizationCreateSchema,
   pcCreateSchema,
   type EntityType,
 } from "@ttrpg/shared";
@@ -21,6 +22,7 @@ export const createSchemaByType: Record<EntityType, z.ZodType<Record<string, unk
   locations: locationCreateSchema,
   mysteries: mysteryCreateSchema,
   clues: clueCreateSchema,
+  organizations: organizationCreateSchema,
 };
 
 export type FieldKind = "text" | "longtext" | "number" | "image" | "select";
@@ -78,5 +80,11 @@ export const fieldConfigsByType: Record<EntityType, FieldConfig[]> = {
     // No "visibility" field here — it's exposed only through ClueRevealSection's
     // dedicated Reveal/Hide actions in EntityForm, which log the change to the
     // session history instead of silently editing it.
+  ],
+  organizations: [
+    { key: "name", label: "Name", kind: "text" },
+    { key: "imageUrl", label: "Image", kind: "image" },
+    { key: "description", label: "Description", kind: "longtext" },
+    { key: "notes", label: "Notes", kind: "longtext" },
   ],
 };

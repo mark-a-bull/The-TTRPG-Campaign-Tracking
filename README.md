@@ -8,7 +8,7 @@ The long-term design covers campaign/entity management, optional per-system rule
 
 Implemented so far:
 
-- **Core entities** — Campaigns, PCs, NPCs, Monsters, Locations, Mysteries/Clues, with full CRUD, image uploads, and a generic view/edit/delete UI. Locations can be nested under a parent location (e.g. a building's floors or rooms), shown as a collapsible tree with breadcrumbs (e.g. "Sunken Keep > Basement") anywhere the GM sees a location.
+- **Core entities** — Campaigns, PCs, NPCs, Monsters, Locations, Mysteries/Clues, Organizations, with full CRUD, image uploads, and a generic view/edit/delete UI. Locations can be nested under a parent location (e.g. a building's floors or rooms), shown as a collapsible tree with breadcrumbs (e.g. "Sunken Keep > Basement") anywhere the GM sees a location. Organizations track any group with a shared purpose — a business, religion, gang, government, or the PCs' own party.
 - **Sessions & battle tracking** — start/end a session (an untitled session defaults its title to the current local date and time), log GM notes and location changes, and run a battle (build combatants → roll initiative → track turns, damage, healing, and status effects → resolve), all recorded to an append-only, chronological history log with a sortable, infinite-scrolling view (sort preference persisted locally).
 - **Entity relationships** — link any two entities to each other with a label (optionally directional, with a separate reverse label), a hidden/revealed visibility flag, and notes. Links show on every linked entity's page, correctly oriented from each side.
 - **Clue/Mystery reveal mechanism** — reveal or hide a clue as a dedicated, session-logged action (not a silent field edit), optionally scoped to specific PCs instead of the whole party. Every reveal/hide shows up in the session's history log.
@@ -88,7 +88,6 @@ Requested features, not yet designed:
 
 - **Custom calendar** ([#3](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/3)) — track in-world dates and events on a GM-configurable calendar.
 - **Player messages via shareable link** ([#15](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/15)) — GM-composed messages to players, delivered through a no-auth link (like the public display screen) rather than real SMS, which would require a paid third-party API.
-- **Organizations entity type** ([#19](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/19)) — a new core entity for groups that serve a shared purpose (a business, religion, gang, government, or the PCs' own party), with the same relationships, images, and notes support as other entities.
 - **Focus switching between groups/PCs** ([#5](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/5)) — select which location or group is currently in focus during a session and track that over time.
 - **Session start meta details** ([#11](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/11)) — record who's attending and where a session takes place (in person, online, etc.) when starting it.
 - **Responsive design validation** ([#12](https://github.com/mark-a-bull/The-TTRPG-Campaign-Tracking/issues/12)) — confirm the app works well on phones and tablets, not just desktop/laptop.

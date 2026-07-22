@@ -7,6 +7,7 @@ import {
   monsterHooks,
   mysteryHooks,
   npcHooks,
+  organizationHooks,
   pcHooks,
   type MinimalEntityRecord,
 } from "../api/entities.js";
@@ -34,6 +35,8 @@ function useCreateForType(entityType: EntityType, campaignId: string) {
       return mysteryHooks.useCreate(campaignId);
     case "clues":
       return clueHooks.useCreate(campaignId);
+    case "organizations":
+      return organizationHooks.useCreate(campaignId);
   }
 }
 
@@ -51,6 +54,8 @@ function useUpdateForType(entityType: EntityType, campaignId: string) {
       return mysteryHooks.useUpdate(campaignId);
     case "clues":
       return clueHooks.useUpdate(campaignId);
+    case "organizations":
+      return organizationHooks.useUpdate(campaignId);
   }
 }
 

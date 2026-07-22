@@ -15,14 +15,15 @@ model Campaign {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  pcs         Pc[]
-  npcs        Npc[]
-  monsters    Monster[]
-  locations   Location[]
-  mysteries   Mystery[]
-  clues       Clue[]
-  sessions    Session[]
-  entityLinks EntityLink[]
+  pcs           Pc[]
+  npcs          Npc[]
+  monsters      Monster[]
+  locations     Location[]
+  mysteries     Mystery[]
+  clues         Clue[]
+  organizations Organization[]
+  sessions      Session[]
+  entityLinks   EntityLink[]
 
   @@map("campaigns")
 }
@@ -111,6 +112,21 @@ model Mystery {
   clues    Clue[]
 
   @@map("mysteries")
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  campaignId  String
+  name        String
+  imageUrl    String?
+  description String   @default("")
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("organizations")
 }
 
 /// visibility: "hidden" | "revealed" (validated by the shared Zod schema, not the DB)
@@ -224,7 +240,7 @@ model StatusEffectInstance {
   @@map("status_effect_instances")
 }
 
-/// fromType/toType: EntityType (pcs|npcs|monsters|locations|mysteries|clues, validated by the
+/// fromType/toType: EntityType (pcs|npcs|monsters|locations|mysteries|clues|organizations, validated by the
 /// shared Zod schema, not the DB). No DB-level FK on the polymorphic type+id pair, same
 /// tradeoff as InitiativeEntry/SessionEvent — a deleted entity's links degrade gracefully
 /// (rendered as "Unknown") rather than being cascaded or blocked.

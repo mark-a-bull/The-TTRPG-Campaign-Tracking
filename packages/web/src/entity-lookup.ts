@@ -5,6 +5,7 @@ import {
   monsterHooks,
   mysteryHooks,
   npcHooks,
+  organizationHooks,
   pcHooks,
   type MinimalEntityRecord,
 } from "./api/entities.js";
@@ -16,7 +17,7 @@ export interface EntityRef {
 }
 
 /**
- * Name lookup across all 6 entity types, for rendering EntityLinks (which can
+ * Name lookup across all 7 entity types, for rendering EntityLinks (which can
  * point at any type). BattleConsole.tsx has its own narrower 3-type version
  * scoped to battle actors (pc/npc/monster) — kept separate rather than
  * shared, since that one is already shipped and correctly scoped for battles.
@@ -29,6 +30,7 @@ export function useEntityNameLookup(campaignId: string) {
     locations: locationHooks.useList(campaignId).data,
     mysteries: mysteryHooks.useList(campaignId).data,
     clues: clueHooks.useList(campaignId).data,
+    organizations: organizationHooks.useList(campaignId).data,
   };
 
   const refs: EntityRef[] = [];
@@ -43,7 +45,7 @@ export function useEntityNameLookup(campaignId: string) {
   }
 
   return {
-    /** All entities across all 6 types, for populating an "add link" target picker. */
+    /** All entities across all 7 types, for populating an "add link" target picker. */
     refs,
     nameFor: (entityType: EntityType, id: string) => lookup.get(`${entityType}:${id}`) ?? "Unknown",
   };
