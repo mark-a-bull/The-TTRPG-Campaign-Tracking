@@ -8,7 +8,6 @@ export const pcCreateSchema = z.object({
   roleOrClass: z.string().max(200).default(""),
   background: z.string().max(5000).default(""),
   notes: z.string().max(5000).default(""),
-  inventory: z.string().max(5000).default(""),
   level: z.number().int().min(1).default(1),
   xp: z.number().int().min(0).default(0),
 });

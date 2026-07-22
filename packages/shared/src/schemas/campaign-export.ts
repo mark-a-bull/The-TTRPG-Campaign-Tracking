@@ -3,6 +3,8 @@ import { battleDetailSchema } from "./battle.js";
 import { campaignSchema } from "./campaign.js";
 import { clueSchema } from "./clue.js";
 import { entityLinkSchema } from "./entity-link.js";
+import { inventoryVisibilitySchema } from "./inventory-visibility.js";
+import { itemSchema } from "./item.js";
 import { locationSchema } from "./location.js";
 import { monsterSchema } from "./monster.js";
 import { mysterySchema } from "./mystery.js";
@@ -31,6 +33,8 @@ export const campaignExportSchema = z.object({
   mysteries: z.array(mysterySchema.omit({ campaignId: true })),
   clues: z.array(clueSchema.omit({ campaignId: true })),
   organizations: z.array(organizationSchema.omit({ campaignId: true })),
+  items: z.array(itemSchema.omit({ campaignId: true })),
+  inventoryVisibilities: z.array(inventoryVisibilitySchema),
   sessions: z.array(sessionExportSchema),
   entityLinks: z.array(entityLinkSchema.omit({ campaignId: true })),
 });

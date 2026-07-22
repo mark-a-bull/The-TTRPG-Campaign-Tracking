@@ -23,6 +23,11 @@ export const sessionEventTypeSchema = z.enum([
   "XP_AWARDED",
   "END_OF_SESSION_XP_AWARDED",
   "END_OF_SESSION_LEVEL_AWARDED",
+  "ITEM_TRANSFERRED",
+  "ITEM_REVEALED",
+  "ITEM_HIDDEN",
+  "INVENTORY_REVEALED",
+  "INVENTORY_HIDDEN",
 ]);
 
 export const sessionCreateSchema = z.object({

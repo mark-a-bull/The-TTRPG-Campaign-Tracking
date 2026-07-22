@@ -9,6 +9,7 @@ import { registerCampaignRoutes } from "./routes/campaigns.js";
 import { registerCampaignTransferRoutes } from "./routes/campaign-transfer.js";
 import { registerClueRoutes } from "./routes/clues.js";
 import { registerEntityLinkRoutes } from "./routes/entity-links.js";
+import { registerItemRoutes } from "./routes/items.js";
 import { registerLocationRoutes } from "./routes/locations.js";
 import { registerMonsterRoutes } from "./routes/monsters.js";
 import { registerMysteryRoutes } from "./routes/mysteries.js";
@@ -44,6 +45,7 @@ export async function buildApp(options: { logger?: boolean } = {}) {
   registerLocationRoutes(app);
   registerMysteryRoutes(app);
   registerOrganizationRoutes(app);
+  registerItemRoutes(app);
   registerClueRoutes(app);
   registerSessionRoutes(app);
   registerBattleRoutes(app);

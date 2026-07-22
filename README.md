@@ -18,6 +18,7 @@ Implemented so far:
 - **Campaign export/import** — export a full campaign (every entity, session history, and uploaded image) to a single `.zip` file for moving between machines or backups; import it back in as a brand-new campaign. No merging/conflict resolution — re-importing an edited copy just creates another campaign.
 - **Public display screen** — a read-only, TV-friendly view at `/display/:campaignId` (no auth — the campaign's own link is the access control, consistent with the rest of the app today) showing the party roster, current session location, party-wide revealed clues (PC-scoped reveals stay private), and battle turn order (no HP/damage numbers). Polls every 5 seconds rather than pushing live updates, since real-time (WebSocket) push isn't built yet.
 - **Players** — a root-level entity (not scoped to any campaign, since the same person can play in multiple) representing a real person the GM plays with, distinct from the PC they play. Managed from its own screen off the main dashboard; a PC can optionally reference which Player plays it.
+- **Structured inventories** — Items (name, image, description, notes, quantity) owned by a PC, NPC, Monster, or Location, managed inline from an Inventory section on each. Moving an item is a dedicated Transfer action, session-logged like Clue reveal/hide. Two independent GM-only visibility levels: hide a holder's whole inventory (even before it has any items), or hide an individual item — both dedicated reveal/hide actions, not silent edits.
 
 Not yet built:
 

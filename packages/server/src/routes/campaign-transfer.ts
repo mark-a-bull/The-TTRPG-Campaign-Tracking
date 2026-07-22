@@ -13,6 +13,7 @@ import {
   type BattleExport,
   type CampaignExport,
   type EntityType,
+  type ItemOwnerType,
   type SessionExport,
 } from "@ttrpg/shared";
 import { errorResponseSchema } from "../error-response.js";
@@ -48,8 +49,19 @@ async function buildCampaignExport(campaignId: string): Promise<CampaignExport |
   const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
   if (!campaign) return null;
 
-  const [pcs, npcs, monsters, locations, mysteries, clues, organizations, sessions, entityLinks] =
-    await Promise.all([
+  const [
+    pcs,
+    npcs,
+    monsters,
+    locations,
+    mysteries,
+    clues,
+    organizations,
+    items,
+    inventoryVisibilities,
+    sessions,
+    entityLinks,
+  ] = await Promise.all([
       prisma.pc.findMany({ where: { campaignId } }),
       prisma.npc.findMany({ where: { campaignId } }),
       prisma.monster.findMany({ where: { campaignId } }),
@@ -57,6 +69,8 @@ async function buildCampaignExport(campaignId: string): Promise<CampaignExport |
       prisma.mystery.findMany({ where: { campaignId } }),
       prisma.clue.findMany({ where: { campaignId } }),
       prisma.organization.findMany({ where: { campaignId } }),
+      prisma.item.findMany({ where: { campaignId } }),
+      prisma.inventoryVisibility.findMany({ where: { campaignId } }),
       prisma.session.findMany({
         where: { campaignId },
         orderBy: { startedAt: "asc" },
@@ -92,6 +106,15 @@ async function buildCampaignExport(campaignId: string): Promise<CampaignExport |
     })),
     clues: clues.map((clue) => withoutCampaignId(serializeClue(clue))),
     organizations: organizations.map((organization) => withoutCampaignId(serializeTimestamps(organization))),
+    items: items.map((item) => ({
+      ...withoutCampaignId(serializeTimestamps(item)),
+      ownerType: item.ownerType as CampaignExport["items"][number]["ownerType"],
+    })),
+    inventoryVisibilities: inventoryVisibilities.map((row) => ({
+      ownerType: row.ownerType as CampaignExport["inventoryVisibilities"][number]["ownerType"],
+      ownerId: row.ownerId,
+      hidden: row.hidden,
+    })),
     sessions: sessions.map((session) => {
       const serialized = serializeSession(session);
       return {
@@ -151,6 +174,7 @@ function collectAssetPaths(data: CampaignExport): string[] {
   for (const monster of data.monsters) add(monster.portraitImageUrl);
   for (const location of data.locations) add(location.imageUrl);
   for (const organization of data.organizations) add(organization.imageUrl);
+  for (const item of data.items) add(item.imageUrl);
   return [...paths];
 }
 
@@ -164,6 +188,7 @@ interface ImportContext {
   mysteryIdMap: Map<string, string>;
   clueIdMap: Map<string, string>;
   organizationIdMap: Map<string, string>;
+  itemIdMap: Map<string, string>;
   entryIdMap: Map<string, string>;
 }
 
@@ -194,6 +219,22 @@ function actorIdMapFor(ctx: ImportContext, actorType: ActorType): Map<string, st
       return ctx.npcIdMap;
     case "monster":
       return ctx.monsterIdMap;
+  }
+}
+
+// A 4-case (pc|npc|monster|location) variant of actorIdMapFor -- Item's
+// ownerType can also be "location", which ActorType (3-value, battle-actor
+// scoped) doesn't cover, so this can't reuse actorIdMapFor as-is.
+function ownerIdMapFor(ctx: ImportContext, ownerType: ItemOwnerType): Map<string, string> {
+  switch (ownerType) {
+    case "pc":
+      return ctx.pcIdMap;
+    case "npc":
+      return ctx.npcIdMap;
+    case "monster":
+      return ctx.monsterIdMap;
+    case "location":
+      return ctx.locationIdMap;
   }
 }
 
@@ -240,6 +281,7 @@ async function importCampaignExport(data: CampaignExport) {
     mysteryIdMap: new Map(),
     clueIdMap: new Map(),
     organizationIdMap: new Map(),
+    itemIdMap: new Map(),
     entryIdMap: new Map(),
   };
 
@@ -301,6 +343,53 @@ async function importCampaignExport(data: CampaignExport) {
       data: remapFlatEntities(data.organizations, ctx.organizationIdMap, newCampaignId),
     }),
   );
+
+  // Items reference a polymorphic owner (pc/npc/monster/location) that must
+  // resolve against sibling rows created in the same import, same as Clue's
+  // mysteryId -- can't be a flat createMany. Runs after the pcs/npcs/
+  // monsters/locations operations above so ownerIdMapFor's maps are already
+  // populated (those remapFlatEntities calls run synchronously above, not
+  // when the transaction executes).
+  for (const item of data.items) {
+    const newId = randomUUID();
+    ctx.itemIdMap.set(item.id, newId);
+    const newOwnerId = ownerIdMapFor(ctx, item.ownerType).get(item.ownerId);
+    if (!newOwnerId) continue; // defensive: owner wasn't part of this export
+    operations.push(
+      prisma.item.create({
+        data: {
+          id: newId,
+          campaignId: newCampaignId,
+          ownerType: item.ownerType,
+          ownerId: newOwnerId,
+          name: item.name,
+          imageUrl: item.imageUrl,
+          description: item.description,
+          notes: item.notes,
+          quantity: item.quantity,
+          hidden: item.hidden,
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt),
+        },
+      }),
+    );
+  }
+
+  for (const visibility of data.inventoryVisibilities) {
+    const newOwnerId = ownerIdMapFor(ctx, visibility.ownerType).get(visibility.ownerId);
+    if (!newOwnerId) continue; // defensive: owner wasn't part of this export
+    operations.push(
+      prisma.inventoryVisibility.create({
+        data: {
+          id: randomUUID(),
+          campaignId: newCampaignId,
+          ownerType: visibility.ownerType,
+          ownerId: newOwnerId,
+          hidden: visibility.hidden,
+        },
+      }),
+    );
+  }
 
   for (const clue of data.clues) {
     const newId = randomUUID();
