@@ -2,6 +2,7 @@ import { z } from "zod";
 import { idSchema, nullableImageUrl, timestampFields } from "./common.js";
 
 export const pcCreateSchema = z.object({
+  playerId: idSchema.nullable().default(null),
   name: z.string().min(1).max(200),
   portraitImageUrl: nullableImageUrl,
   roleOrClass: z.string().max(200).default(""),

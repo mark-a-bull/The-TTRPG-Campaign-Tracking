@@ -6,6 +6,7 @@ export * from "./schemas/monster.js";
 export * from "./schemas/location.js";
 export * from "./schemas/mystery.js";
 export * from "./schemas/organization.js";
+export * from "./schemas/player.js";
 export * from "./schemas/clue.js";
 export * from "./schemas/session.js";
 export * from "./schemas/battle.js";

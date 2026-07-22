@@ -4,6 +4,7 @@ import { BattleConsole } from "./screens/BattleConsole.js";
 import { CampaignDashboard } from "./screens/CampaignDashboard.js";
 import { CampaignHome } from "./screens/CampaignHome.js";
 import { HistoryLog } from "./screens/HistoryLog.js";
+import { PlayersScreen } from "./screens/PlayersScreen.js";
 import { PublicDisplay } from "./screens/PublicDisplay.js";
 import { SettingsScreen } from "./screens/SettingsScreen.js";
 
@@ -16,6 +17,7 @@ function GmApp() {
     <SettingsProvider>
       <Routes>
         <Route path="/" element={<CampaignDashboard />} />
+        <Route path="/players" element={<PlayersScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="/campaigns/:campaignId" element={<CampaignHome />} />
         <Route path="/campaigns/:campaignId/sessions/:sessionId" element={<HistoryLog />} />

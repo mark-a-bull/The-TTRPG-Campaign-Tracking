@@ -11,6 +11,7 @@ import { TextField } from "../ui/TextField.js";
 import { ClueRevealSection } from "./ClueRevealSection.js";
 import { EntityLinksSection } from "./EntityLinksSection.js";
 import { LocationParentField } from "./LocationParentField.js";
+import { PcPlayerField } from "./PcPlayerField.js";
 import { XpAwardSection } from "./XpAwardSection.js";
 import type { PC } from "@ttrpg/shared";
 
@@ -164,6 +165,14 @@ export function EntityForm({
           currentId={initialValues?.id as string | undefined}
           value={(watch("parentLocationId") as string | null) ?? null}
           onChange={(value) => setValue("parentLocationId", value, { shouldDirty: true })}
+          readOnly={readOnly}
+        />
+      ) : null}
+
+      {entityType === "pcs" ? (
+        <PcPlayerField
+          value={(watch("playerId") as string | null) ?? null}
+          onChange={(value) => setValue("playerId", value, { shouldDirty: true })}
           readOnly={readOnly}
         />
       ) : null}

@@ -17,6 +17,7 @@ Implemented so far:
 - **Appearance settings** — dark mode and a customizable color scheme (primary, surface, background, and their text colors), persisted server-side so it's the same regardless of which device or browser opens the app.
 - **Campaign export/import** — export a full campaign (every entity, session history, and uploaded image) to a single `.zip` file for moving between machines or backups; import it back in as a brand-new campaign. No merging/conflict resolution — re-importing an edited copy just creates another campaign.
 - **Public display screen** — a read-only, TV-friendly view at `/display/:campaignId` (no auth — the campaign's own link is the access control, consistent with the rest of the app today) showing the party roster, current session location, party-wide revealed clues (PC-scoped reveals stay private), and battle turn order (no HP/damage numbers). Polls every 5 seconds rather than pushing live updates, since real-time (WebSocket) push isn't built yet.
+- **Players** — a root-level entity (not scoped to any campaign, since the same person can play in multiple) representing a real person the GM plays with, distinct from the PC they play. Managed from its own screen off the main dashboard; a PC can optionally reference which Player plays it.
 
 Not yet built:
 

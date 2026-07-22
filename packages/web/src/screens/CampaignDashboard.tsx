@@ -81,7 +81,10 @@ export function CampaignDashboard() {
       <TopAppBar
         title="Campaigns"
         trailing={
-          <IconButton icon="settings" label="Settings" onClick={() => navigate("/settings")} />
+          <>
+            <IconButton icon="group" label="Players" onClick={() => navigate("/players")} />
+            <IconButton icon="settings" label="Settings" onClick={() => navigate("/settings")} />
+          </>
         }
       />
       <div style={{ padding: 24 }}>
