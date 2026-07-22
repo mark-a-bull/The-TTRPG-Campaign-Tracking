@@ -20,6 +20,7 @@ describe("campaign export/import", () => {
   let locationId: string;
   let childLocationId: string;
   let organizationId: string;
+  let itemId: string;
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
@@ -119,6 +120,20 @@ describe("campaign export/import", () => {
       url: `/api/campaigns/${campaignId}/sessions/${sessionId}/notes`,
       payload: { note: "Found a hidden door." },
     });
+
+    // Owned by the Location, not a PC/NPC/Monster, to prove the 4th owner
+    // type round-trips through export/import.
+    const itemRes = await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/items`,
+      payload: { ownerType: "location", ownerId: locationId, name: "Rusty Chest", quantity: 1 },
+    });
+    itemId = itemRes.json().id;
+    await app.inject({
+      method: "POST",
+      url: `/api/campaigns/${campaignId}/inventory-visibility/hide`,
+      payload: { ownerType: "location", ownerId: locationId },
+    });
     await app.inject({
       method: "POST",
       url: `/api/campaigns/${campaignId}/clues/${clueId}/reveal`,
@@ -189,6 +204,10 @@ describe("campaign export/import", () => {
     expect(manifest.mysteries).toHaveLength(1);
     expect(manifest.clues).toHaveLength(1);
     expect(manifest.organizations).toHaveLength(1);
+    expect(manifest.items).toHaveLength(1);
+    expect(manifest.items[0].ownerType).toBe("location");
+    expect(manifest.inventoryVisibilities).toHaveLength(1);
+    expect(manifest.inventoryVisibilities[0].hidden).toBe(true);
     expect(manifest.entityLinks).toHaveLength(2);
     expect(manifest.sessions).toHaveLength(1);
     expect(manifest.sessions[0].events.length).toBeGreaterThan(0);
@@ -219,6 +238,26 @@ describe("campaign export/import", () => {
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/sessions` }).then((r) => r.json()),
         app.inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/organizations` }).then((r) => r.json()),
       ]);
+
+      const newLocation = newLocations.find((location: { name: string }) => location.name === "The Sunken Keep");
+      const [newItems, newInventoryVisibility] = await Promise.all([
+        app
+          .inject({ method: "GET", url: `/api/campaigns/${newCampaign.id}/items?ownerType=location&ownerId=${newLocation.id}` })
+          .then((r) => r.json()),
+        app
+          .inject({
+            method: "GET",
+            url: `/api/campaigns/${newCampaign.id}/inventory-visibility?ownerType=location&ownerId=${newLocation.id}`,
+          })
+          .then((r) => r.json()),
+      ]);
+      // The item's ownerId must resolve to the *new* location id, not the
+      // original one from the export -- proves ownerIdMapFor's 4th case.
+      expect(newItems).toHaveLength(1);
+      expect(newItems[0].id).not.toBe(itemId);
+      expect(newItems[0].name).toBe("Rusty Chest");
+      expect(newItems[0].ownerId).toBe(newLocation.id);
+      expect(newInventoryVisibility.hidden).toBe(true);
 
       expect(newPcs).toHaveLength(1);
       expect(newPcs[0].id).not.toBe(pcId);

@@ -10,10 +10,18 @@ import { ErrorBanner, errorMessage } from "../ui/ErrorBanner.js";
 import { TextField } from "../ui/TextField.js";
 import { ClueRevealSection } from "./ClueRevealSection.js";
 import { EntityLinksSection } from "./EntityLinksSection.js";
+import { InventorySection } from "./InventorySection.js";
 import { LocationParentField } from "./LocationParentField.js";
 import { PcPlayerField } from "./PcPlayerField.js";
 import { XpAwardSection } from "./XpAwardSection.js";
-import type { PC } from "@ttrpg/shared";
+import type { ItemOwnerType, PC } from "@ttrpg/shared";
+
+const entityTypeToOwnerType: Partial<Record<EntityType, ItemOwnerType>> = {
+  pcs: "pc",
+  npcs: "npc",
+  monsters: "monster",
+  locations: "location",
+};
 
 interface EntityFormProps {
   entityType: EntityType;
@@ -185,6 +193,15 @@ export function EntityForm({
         <ClueRevealSection
           campaignId={initialValues.campaignId as string}
           clue={initialValues as unknown as Clue}
+          readOnly={readOnly}
+        />
+      ) : null}
+
+      {initialValues && entityTypeToOwnerType[entityType] ? (
+        <InventorySection
+          campaignId={initialValues.campaignId as string}
+          ownerType={entityTypeToOwnerType[entityType]!}
+          ownerId={initialValues.id as string}
           readOnly={readOnly}
         />
       ) : null}

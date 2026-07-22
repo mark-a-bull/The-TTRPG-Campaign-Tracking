@@ -15,15 +15,17 @@ model Campaign {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  pcs           Pc[]
-  npcs          Npc[]
-  monsters      Monster[]
-  locations     Location[]
-  mysteries     Mystery[]
-  clues         Clue[]
-  organizations Organization[]
-  sessions      Session[]
-  entityLinks   EntityLink[]
+  pcs                   Pc[]
+  npcs                  Npc[]
+  monsters              Monster[]
+  locations             Location[]
+  mysteries             Mystery[]
+  clues                 Clue[]
+  organizations         Organization[]
+  items                 Item[]
+  inventoryVisibilities InventoryVisibility[]
+  sessions              Session[]
+  entityLinks           EntityLink[]
 
   @@map("campaigns")
 }
@@ -41,7 +43,6 @@ model Pc {
   roleOrClass       String   @default("")
   background        String   @default("")
   notes             String   @default("")
-  inventory         String   @default("")
   level             Int      @default(1)
   xp                Int      @default(0)
   createdAt         DateTime @default(now())
@@ -145,6 +146,48 @@ model Organization {
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@map("organizations")
+}
+
+/// ownerType: "pc" | "npc" | "monster" | "location" (validated by the shared Zod
+/// schema, not the DB). No DB-level FK on the polymorphic ownerType+ownerId pair,
+/// same tradeoff as InitiativeEntry/EntityLink -- a deleted owner leaves an item's
+/// ownerId dangling, resolved to "Unknown" at the UI layer rather than cascading
+/// or being blocked. hidden is only ever flipped via the dedicated reveal/hide
+/// routes, never a silent field edit.
+model Item {
+  id          String   @id @default(uuid())
+  campaignId  String
+  ownerType   String
+  ownerId     String
+  name        String
+  imageUrl    String?
+  description String   @default("")
+  notes       String   @default("")
+  quantity    Int      @default(1)
+  hidden      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("items")
+}
+
+/// A holder's inventory-wide hidden flag, kept separate from Item rows so a
+/// holder's whole inventory section can be hidden before it has any items in
+/// it. No row for a given (campaignId, ownerType, ownerId) means visible --
+/// only ever flipped via dedicated reveal/hide routes.
+model InventoryVisibility {
+  id         String  @id @default(uuid())
+  campaignId String
+  ownerType  String
+  ownerId    String
+  hidden     Boolean @default(false)
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, ownerType, ownerId])
+  @@map("inventory_visibilities")
 }
 
 /// visibility: "hidden" | "revealed" (validated by the shared Zod schema, not the DB)

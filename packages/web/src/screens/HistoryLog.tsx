@@ -24,6 +24,11 @@ const EVENT_LABELS: Record<string, string> = {
   XP_AWARDED: "XP awarded",
   END_OF_SESSION_XP_AWARDED: "End-of-session XP awarded",
   END_OF_SESSION_LEVEL_AWARDED: "End-of-session level awarded",
+  ITEM_TRANSFERRED: "Item moved",
+  ITEM_REVEALED: "Item revealed",
+  ITEM_HIDDEN: "Item hidden",
+  INVENTORY_REVEALED: "Inventory revealed",
+  INVENTORY_HIDDEN: "Inventory hidden",
 };
 
 function describeEvent(event: SessionEvent): string {
@@ -77,6 +82,18 @@ function describeEvent(event: SessionEvent): string {
         : "";
     case "END_OF_SESSION_LEVEL_AWARDED":
       return typeof payload.pcName === "string" ? `${payload.pcName} reached Level ${payload.newLevel}` : "";
+    case "ITEM_TRANSFERRED":
+      return typeof payload.itemName === "string"
+        ? `${payload.itemName}: ${payload.fromOwnerName ?? "?"} → ${payload.toOwnerName ?? "?"}`
+        : "";
+    case "ITEM_REVEALED":
+      return typeof payload.itemName === "string" ? `Revealed: ${payload.itemName}` : "";
+    case "ITEM_HIDDEN":
+      return typeof payload.itemName === "string" ? `Hid: ${payload.itemName}` : "";
+    case "INVENTORY_REVEALED":
+      return typeof payload.ownerName === "string" ? `Revealed ${payload.ownerName}'s inventory` : "";
+    case "INVENTORY_HIDDEN":
+      return typeof payload.ownerName === "string" ? `Hid ${payload.ownerName}'s inventory` : "";
     default:
       return "";
   }

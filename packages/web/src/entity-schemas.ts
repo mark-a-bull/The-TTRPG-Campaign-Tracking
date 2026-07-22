@@ -41,7 +41,6 @@ export const fieldConfigsByType: Record<EntityType, FieldConfig[]> = {
     { key: "roleOrClass", label: "Role / Class", kind: "text" },
     { key: "level", label: "Level", kind: "number" },
     { key: "background", label: "Background", kind: "longtext" },
-    { key: "inventory", label: "Inventory", kind: "longtext" },
     { key: "notes", label: "Notes", kind: "longtext" },
     // No "xp" field here — it's exposed only through XpAwardSection's
     // dedicated Award XP action in EntityForm, which logs the change to the
